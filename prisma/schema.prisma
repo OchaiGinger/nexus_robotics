@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model SortGroup {
+  id        String   @id @default(uuid())
+  status    String
+  order     Int
+  createdAt DateTime @default(now())
+
+  tasks Task[]
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  jobId       String
+  type        String
+  payload     Json
+  status      String
+  tools       Json?
+  sortGroupId String?
+  sortGroup   SortGroup? @relation(fields: [sortGroupId], references: [id])
+  createdAt   DateTime   @default(now())
+}
+
+model Action {
+  id        String   @id @default(uuid())
+  jobId     String
+  taskId    String
+  atomIndex Int
+  atomType  String
+  pair      Json
+  status    String // "pending" | "completed"
+  createdAt DateTime @default(now())
+}
