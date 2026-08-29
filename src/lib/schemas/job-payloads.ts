@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-// Construction-input schemas: only the parameters a user must SPECIFY
-// to fully define the shape. Anything mathematically derivable from
-// these (addendum, dedendum, pitch diameter, polygon vertex
-// coordinates, etc.) is intentionally left OUT — that's computed
-// downstream by the relevant actor, not entered by hand.
-
 export const projectionAgentPayloadSchema = z.object({}).passthrough();
-// ^ still no spec for this one — untouched, per earlier scope decision.
 
 export const angleAgentPayloadSchema = z.object({
   label: z.string().min(1, "Give this angle a name").default(""),
@@ -17,27 +10,66 @@ export const angleAgentPayloadSchema = z.object({
     .lt(360, "Must be less than 360"),
 });
 
-export const gearAgentPayloadSchema = z.object({
-  label: z.string().min(1, "Give this gear a name").default(""),
-  module: z.number().positive("Module must be greater than 0"), // mm
-  teethCount: z.number().int().positive("Must be a positive integer"),
-  pressureAngleDegrees: z
-    .number()
-    .positive("Must be greater than 0")
-    .default(20), // 20° is the standard default in gear design
-  // NOTE: addendum, dedendum, pitch diameter, outside diameter are all
-  // derivable from module + teethCount + pressureAngle using standard
-  // gear formulas — deliberately not collected here.
+export type TriangleType = "equilateral" | "isosceles" | "scalene";
+
+const polygonTypeSchema = z.enum([
+  "triangle",
+  "square",
+  "rectangle",
+  "pentagon",
+  "hexagon",
+  "heptagon",
+  "octagon",
+  "nonagon",
+  "decagon",
+]);
+
+const triangleDimensionsSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("equilateral"),
+    sideLengthMm: z.number().positive("Must be greater than 0"),
+  }),
+  z.object({
+    type: z.literal("isosceles"),
+    baseLengthMm: z.number().positive("Must be greater than 0"),
+    equalSideLengthMm: z.number().positive("Must be greater than 0"),
+  }),
+  z.object({
+    type: z.literal("scalene"),
+    sideAMm: z.number().positive("Must be greater than 0"),
+    sideBMm: z.number().positive("Must be greater than 0"),
+    sideCMm: z.number().positive("Must be greater than 0"),
+  }),
+]);
+
+const regularPolygonDimensionsSchema = z.object({
+  sideLengthMm: z.number().positive("Must be greater than 0"),
+});
+
+const rectangleDimensionsSchema = z.object({
+  widthMm: z.number().positive("Must be greater than 0"),
+  heightMm: z.number().positive("Must be greater than 0"),
 });
 
 export const polygonAgentPayloadSchema = z.object({
   label: z.string().min(1, "Give this polygon a name").default(""),
-  sides: z.number().int().min(3, "A polygon needs at least 3 sides"),
-  sideLengthMm: z.number().positive("Must be greater than 0"),
-  // NOTE: vertex coordinates are derived from sides + sideLength (and
-  // an assumed regular polygon) downstream — not entered by hand.
-  // ASSUMPTION I'm making explicit: this assumes REGULAR polygons only.
-  // If irregular polygons are ever needed, this schema doesn't cover it.
+  polygonType: polygonTypeSchema,
+  dimensions: z.union([
+    triangleDimensionsSchema,
+    rectangleDimensionsSchema,
+    regularPolygonDimensionsSchema,
+  ]),
+});
+
+export const gearAgentPayloadSchema = z.object({
+  label: z.string().min(1, "Give this gear a name").default(""),
+  module: z.number().positive("Module must be greater than 0"),
+  teethCount: z.number().int().positive("Must be a positive integer"),
+  pressureAngleDegrees: z
+    .number()
+    .positive("Must be greater than 0")
+    .default(20),
+  faceWidthMm: z.number().positive("Face width must be greater than 0"),
 });
 
 export type JobType =
@@ -56,3 +88,5 @@ export const schemaByType: Record<JobType, z.ZodTypeAny> = {
 export type AngleAgentPayload = z.infer<typeof angleAgentPayloadSchema>;
 export type GearAgentPayload = z.infer<typeof gearAgentPayloadSchema>;
 export type PolygonAgentPayload = z.infer<typeof polygonAgentPayloadSchema>;
+export type TriangleType = z.infer<typeof triangleTypeSchema>;
+export type PolygonType = z.infer<typeof polygonTypeSchema>;

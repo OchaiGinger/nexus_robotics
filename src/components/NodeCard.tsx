@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import type { NodeLog } from "@/app/context/machine-context";
 
-const STATUS_STYLES = {
-  active: { border: "#16a34a", bg: "#dcfce7", dot: "#16a34a" },
-  done: { border: "#94a3b8", bg: "#f1f5f9", dot: "#64748b" },
-  never: { border: "#e5e7eb", bg: "#fff", dot: null },
+const STATUS_COLORS = {
+  active: { fill: "#dcfce7", stroke: "#16a34a", dot: "#16a34a" },
+  done: { fill: "#f1f5f9", stroke: "#94a3b8", dot: "#64748b" },
+  never: { fill: "#ffffff", stroke: "#d1d5db", dot: null },
 } as const;
+
+const NODE_RADIUS = 28;
 
 export function NodeCard({
   id,
@@ -23,86 +26,95 @@ export function NodeCard({
 }) {
   const entry = nodeLog[id];
   const status = entry?.status ?? "never";
-  const style = STATUS_STYLES[status];
+  const colors = STATUS_COLORS[status];
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <div
-      data-node-id={id}
-      style={{
-        border: "2px solid",
-        borderColor: style.border,
-        background: style.bg,
-        borderRadius: 10,
-        padding: compact ? 8 : 10,
-        minWidth: compact ? 140 : 170,
-        transition: "background 150ms ease, border-color 150ms ease",
-      }}
+      className="flex flex-col items-center"
+      style={{ width: compact ? 90 : 100 }}
     >
-      <div
-        style={{
-          fontWeight: 600,
-          fontSize: 13,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          whiteSpace: "nowrap",
-        }}
-      >
-        {style.dot && (
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 999,
-              background: style.dot,
-              flexShrink: 0,
-            }}
+      <svg width={NODE_RADIUS * 2 + 4} height={NODE_RADIUS * 2 + 4}>
+        <circle
+          cx={NODE_RADIUS + 2}
+          cy={NODE_RADIUS + 2}
+          r={NODE_RADIUS}
+          fill={colors.fill}
+          stroke={colors.stroke}
+          strokeWidth={2}
+          style={{
+            filter:
+              status === "active"
+                ? "drop-shadow(0 0 4px rgba(22, 163, 74, 0.5))"
+                : "none",
+          }}
+        />
+        <text
+          x={NODE_RADIUS + 2}
+          y={NODE_RADIUS - 2}
+          textAnchor="middle"
+          fontSize={8}
+          fontWeight={600}
+          fill="#1f2937"
+        >
+          {label.length > 9 ? label.slice(0, 9) + "…" : label}
+        </text>
+        {actor && (
+          <text
+            x={NODE_RADIUS + 2}
+            y={NODE_RADIUS + 10}
+            textAnchor="middle"
+            fontSize={6}
+            fill="#7c3aed"
+            fontFamily="monospace"
+          >
+            {actor.length > 13 ? actor.slice(0, 13) + "…" : actor}
+          </text>
+        )}
+        {colors.dot && (
+          <circle
+            cx={NODE_RADIUS * 2 - 4}
+            cy={6}
+            r={4}
+            fill={colors.dot}
+            stroke="#fff"
+            strokeWidth={1.5}
           />
         )}
-        {label}
-        {status !== "never" && (
-          <span style={{ fontSize: 10, color: "#6b7280", fontWeight: 400 }}>
-            {status === "active" ? "(running)" : "(done)"}
-          </span>
-        )}
-      </div>
-
-      {actor && (
-        <div
-          style={{
-            fontSize: 10,
-            color: "#7c3aed",
-            fontFamily: "monospace",
-            marginTop: 2,
-          }}
-        >
-          {actor}
-        </div>
-      )}
+      </svg>
 
       {entry && (
-        <details style={{ marginTop: 6 }}>
-          <summary
-            style={{ fontSize: 10, color: "#6b7280", cursor: "pointer" }}
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-1 flex w-full items-center justify-center gap-1 rounded px-2 py-0.5 text-[9px] font-medium transition-colors hover:bg-muted/50"
+          style={{
+            color: status === "active" ? "#16a34a" : "#64748b",
+          }}
+        >
+          <span
+            className="inline-block transition-transform"
+            style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)" }}
           >
-            payload
-          </summary>
-          <pre
-            style={{
-              fontSize: 10,
-              marginTop: 4,
-              background: "#0b1020",
-              color: "#d1e7ff",
-              padding: 6,
-              borderRadius: 4,
-              maxWidth: 260,
-              maxHeight: 160,
-              overflow: "auto",
-            }}
-          >
-            {JSON.stringify(entry.context, null, 2)}
+            ▶
+          </span>
+          {status === "active" ? "running" : "done"}
+        </button>
+      )}
+
+      {expanded && entry && (
+        <div
+          className="mt-1 w-full overflow-auto rounded border border-border bg-[#0b1020] p-1.5"
+          style={{
+            maxHeight: 150,
+            fontSize: 8,
+            lineHeight: 1.3,
+            fontFamily: "monospace",
+          }}
+        >
+          <pre className="whitespace-pre-wrap break-words text-blue-200">
+            {JSON.stringify(entry.context, null, 1)}
           </pre>
-        </details>
+        </div>
       )}
     </div>
   );

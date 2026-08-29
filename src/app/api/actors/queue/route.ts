@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
 
       await prisma.task.create({
         data: {
-          id: input.job.id,
           jobId: input.job.id,
           type: input.job.type,
           payload: input.job.payload as any,
@@ -99,6 +98,7 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   } catch (err) {
+    console.error("Queue actor error:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 },
