@@ -18,7 +18,13 @@ type QueueActorOutput =
   | { label: "nextBatch"; sortGroupId: string };
 
 export async function POST(req: NextRequest) {
-  const input: QueueActorInput = await req.json();
+  let input: QueueActorInput;
+
+  try {
+    input = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Request body must be valid JSON" }, { status: 400 });
+  }
 
   try {
     if (input.origin === "newJob") {
@@ -99,9 +105,31 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     console.error("Queue actor error:", err);
+    const databaseUnavailable = isTransientDatabaseError(err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 },
+      {
+        error: databaseUnavailable
+          ? "Database connection timed out. Check DATABASE_URL/network access and retry."
+          : err instanceof Error
+            ? err.message
+            : "Unknown error",
+        retryable: databaseUnavailable,
+      },
+      {
+        status: databaseUnavailable ? 503 : 500,
+        headers: databaseUnavailable ? { "Retry-After": "5" } : undefined,
+      },
     );
   }
+}
+
+function isTransientDatabaseError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const candidate = error as { code?: unknown; message?: unknown; meta?: { code?: unknown } };
+  const code = String(candidate.code ?? candidate.meta?.code ?? "");
+  const message = String(candidate.message ?? "");
+
+  return ["P1001", "P1002", "P1008", "P1017", "ETIMEDOUT"].includes(code)
+    || /ETIMEDOUT|connection.*timeout|connect.*timeout/i.test(message);
 }

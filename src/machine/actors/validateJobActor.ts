@@ -13,6 +13,9 @@ type ValidateJobInput = {
 type ValidateJobOutput = {
   label: JobType;
   job: ValidateJobInput["job"];
+} | {
+  label: "invalid";
+  reason: string;
 };
 
 export const validateJobActor = fromPromise<
@@ -23,26 +26,23 @@ export const validateJobActor = fromPromise<
     throw new Error("No job provided to validateJob");
   }
 
-  const isValid = checkParameters(input.job);
-  if (!isValid) {
-    throw new Error(`Invalid parameters for job type: ${input.job.type}`);
+  const response = await fetch("/api/jobs/validate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input.job),
+  });
+
+  const result = await response.json() as {
+    valid?: boolean;
+    reason?: string;
+  };
+
+  if (!response.ok || !result.valid) {
+    return {
+      label: "invalid",
+      reason: result.reason ?? `Validation request failed (${response.status})`,
+    };
   }
 
   return { label: input.job.type, job: input.job };
 });
-
-function checkParameters(job: ValidateJobInput["job"]): boolean {
-  // per-type parameter validation goes here
-  switch (job.type) {
-    case "projectionAgent":
-      return true; // replace with real checks
-    case "angleAgent":
-      return true;
-    case "gearAgent":
-      return true;
-    case "polygonAgent":
-      return true;
-    default:
-      return false;
-  }
-}

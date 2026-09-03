@@ -24,10 +24,14 @@ export const queueActor = fromPromise<QueueActorOutput, QueueActorInput>(
       body: JSON.stringify(input),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({})) as {
+      error?: string;
+      retryable?: boolean;
+    };
 
     if (!res.ok) {
-      throw new Error(data.error ?? "queueActor request failed");
+      const retryable = data.retryable ? " Retry is safe." : "";
+      throw new Error(`queueActor request failed (${res.status}): ${data.error ?? "Unknown error"}${retryable}`);
     }
 
     return data as QueueActorOutput;

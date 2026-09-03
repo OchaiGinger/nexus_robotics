@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Play, Pause, SkipBack, SkipForward } from "lucide-react";
+import { runAngleJob } from "@/machine/actors/angleActor";
+import type { AngleJob } from "@/machine/actors/angleActor";
 
 type DecompItem = number | `c${number}`;
 type Step =
@@ -344,6 +346,7 @@ export default function TestPage() {
   const [showAll, setShowAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedBisect, setExpandedBisect] = useState<Set<number>>(new Set());
+  const [inputAngle, setInputAngle] = useState<string>("");
   const playInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -351,9 +354,11 @@ export default function TestPage() {
     if (dataParam) {
       try {
         const parsed = JSON.parse(decodeURIComponent(dataParam));
-        setData(parsed);
-        setRawJson(JSON.stringify(parsed, null, 2));
-        setError(null);
+        if (parsed.result && parsed.result.steps) {
+          setData(parsed);
+          setRawJson(JSON.stringify(parsed, null, 2));
+          setError(null);
+        }
       } catch {
         setError("Failed to parse data from URL");
       }
@@ -363,12 +368,37 @@ export default function TestPage() {
   const handleJsonSubmit = () => {
     try {
       const parsed = JSON.parse(rawJson);
+      if (!parsed.result || !parsed.result.steps) {
+        setError("JSON must include result.steps");
+        return;
+      }
       setData(parsed);
       setError(null);
       setCurrentStep(-1);
       setShowAll(false);
     } catch {
       setError("Invalid JSON");
+    }
+  };
+
+  const handleAngleSubmit = () => {
+    const angle = parseFloat(inputAngle);
+    if (isNaN(angle) || angle <= 0 || angle >= 360) {
+      setError("Enter an angle between 0 and 360");
+      return;
+    }
+    try {
+      const result = runAngleJob({
+        id: "test-" + Date.now(),
+        payload: { label: "test angle", angleDegrees: angle },
+      });
+      setData(result);
+      setRawJson(JSON.stringify(result, null, 2));
+      setError(null);
+      setCurrentStep(-1);
+      setShowAll(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Construction failed");
     }
   };
 
@@ -398,16 +428,33 @@ export default function TestPage() {
     };
   }, []);
 
-  if (!data) {
+  if (!data || !data.result) {
     return (
       <div className="flex h-screen flex-col bg-slate-100">
         <header className="flex h-10 items-center border-b border-slate-200 bg-white px-3">
           <span className="text-xs font-bold text-slate-800">Drafting Tester</span>
           <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">RLHF</span>
         </header>
-        <div className="flex flex-1 items-center justify-center p-8">
+         <div className="flex flex-1 items-center justify-center p-8">
           <div className="w-full max-w-2xl">
-            <h2 className="mb-4 text-sm font-semibold text-slate-700">Paste Actor Output JSON</h2>
+            <h2 className="mb-4 text-sm font-semibold text-slate-700">Enter Angle</h2>
+            <div className="mb-6 flex gap-2">
+              <input
+                type="number"
+                value={inputAngle}
+                onChange={(e) => setInputAngle(e.target.value)}
+                placeholder="e.g. 90"
+                className="w-24 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <button
+                onClick={handleAngleSubmit}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
+              >
+                Run Angle Actor
+              </button>
+            </div>
+            {error && <p className="mb-3 text-xs text-red-500">{error}</p>}
+            <h2 className="mb-2 text-sm font-semibold text-slate-700">Or Paste Actor Output JSON</h2>
             <textarea
               value={rawJson}
               onChange={(e) => setRawJson(e.target.value)}
@@ -488,6 +535,19 @@ export default function TestPage() {
     <div className="flex h-screen flex-col bg-slate-100">
       <header className="flex h-10 items-center justify-between border-b border-slate-200 bg-white px-3">
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setData(null);
+              setInputAngle("");
+              setRawJson("");
+              setCurrentStep(-1);
+              setShowAll(false);
+            }}
+            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            title="New Test"
+          >
+            <ChevronLeft size={14} />
+          </button>
           <span className="text-xs font-bold text-slate-800">Drafting Tester</span>
           <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">RLHF</span>
           <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[9px] font-medium text-indigo-700">{result.angle}°</span>

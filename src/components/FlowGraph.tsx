@@ -83,12 +83,25 @@ function PayloadPanel({ entry, nodeId, onClose }: { entry: NodeLogEntry; nodeId:
   const router = useRouter();
   const ctx = entry.context as Record<string, unknown> | null;
   const input = ctx?.job ?? ctx?.actionsResult ?? ctx?.toolResult;
-  const output = ctx?.agentResult ?? ctx?.validationResult ?? ctx?.actionsResult;
+  // Agent output is wrapped as { label, jobId, agent, result } in the
+  // machine context. The angle-specific fields live in `result`.
+  const agentResult = ctx?.agentResult as { result?: unknown } | undefined;
+  const output = (agentResult?.result ?? ctx?.validationResult ?? ctx?.actionsResult) as Record<string, unknown> | undefined;
+  const lastError = ctx?.lastError;
   const decomp = output?.decomp as { full: (number | string)[]; gap: (number | string)[] } | undefined;
   const quadrant = output?.quadrant as number | undefined;
   const gap = output?.gap as number | undefined;
   const from = output?.from as string | undefined;
-  const steps = output?.steps as any[] | undefined;
+  const steps = output?.steps as Record<string, unknown>[] | undefined;
+
+  // Context payloads are intentionally `unknown` because they come from
+  // different actors. Never render one directly in JSX; convert it to a
+  // concrete string at the UI boundary.
+  const displayText = (value: unknown): string => {
+    if (typeof value === "string" || typeof value === "number") return String(value);
+    if (value == null) return "";
+    return JSON.stringify(value) ?? String(value);
+  };
 
   const handleTest = () => {
     const testData = output || ctx || {};
@@ -154,7 +167,7 @@ function PayloadPanel({ entry, nodeId, onClose }: { entry: NodeLogEntry; nodeId:
                   ))}
                 </div>
                 <div className="mt-2 flex gap-3 text-[10px] text-slate-500">
-                  <span>{decomp.full.reduce((sum, p) => sum + (typeof p === "number" ? p : parseFloat(p.slice(1))), 0)}° total</span>
+                  <span>{decomp.full.reduce<number>((sum, p) => sum + (typeof p === "number" ? p : parseFloat(p.slice(1))), 0)}° total</span>
                   {quadrant && <span>Q{quadrant}</span>}
                 </div>
               </div>
@@ -191,20 +204,20 @@ function PayloadPanel({ entry, nodeId, onClose }: { entry: NodeLogEntry; nodeId:
                           : step.t === "compass" ? "bg-red-100 text-red-700"
                           : "bg-slate-100 text-slate-700"
                       }`}>
-                        {step.t}
+                        {displayText(step.t)}
                       </span>
-                      <span className="text-slate-600">{step.l}</span>
-                      {step.pin && <span className="text-slate-400">@{step.pin}</span>}
+                      <span className="text-slate-600">{displayText(step.l)}</span>
+                      {step.pin != null && <span className="text-slate-400">@{displayText(step.pin)}</span>}
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            {input && (
+            {Boolean(input) && (
               <div>
                 <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Input</div>
                 <pre className="overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-emerald-300">
-                  {JSON.stringify(input, null, 2)}
+                  {displayText(input)}
                 </pre>
               </div>
             )}
@@ -212,20 +225,28 @@ function PayloadPanel({ entry, nodeId, onClose }: { entry: NodeLogEntry; nodeId:
               <div>
                 <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Output</div>
                 <pre className="overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-blue-300">
-                  {JSON.stringify(output, null, 2)}
+                  {displayText(output)}
+                </pre>
+              </div>
+            )}
+            {Boolean(lastError) && (
+              <div>
+                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-red-500">Last Error</div>
+                <pre className="overflow-auto rounded-lg bg-red-950 p-3 text-[11px] leading-relaxed text-red-100">
+                  {lastError instanceof Error ? lastError.message : displayText(lastError)}
                 </pre>
               </div>
             )}
             {!input && !output && (
               <pre className="overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-300">
-                {JSON.stringify(ctx, null, 2)}
+                {displayText(ctx)}
               </pre>
             )}
           </div>
         )}
         {tab === "raw" && (
           <pre className="overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-300">
-            {JSON.stringify(entry.context, null, 2)}
+            {displayText(entry.context)}
           </pre>
         )}
       </div>

@@ -1,14 +1,39 @@
 import { fromPromise } from "xstate";
+import { Helpers, Construct, fullTaskList } from "./angleClasses";
+import type { Point, Line, DrawInstruction } from "./angleClasses";
+import {
+  MIN_VALID_ANGLE,
+  MAX_VALID_ANGLE,
+  border,
+  rayLength,
+  baseLineLength,
+  BASE_CONSTRUCTABLE_ANGLES,
+  QUADRANT_SWEEP_DIRECTION,
+} from "./constants";
 
-const PAPER_WIDTH = 300;
-const PAPER_HEIGHT = 220;
-const BORDER = 20;
-const BASELINE_LEN = 120;
-const ARC_RADIUS = 60;
-const RAY_LEN = 150;
+export type AngleJob = { id: string; payload: { label: string; angleDegrees: number } };
 
 type AngleActorInput = {
-  job: { id: string; payload: { label: string; angleDegrees: number } };
+  job: AngleJob;
+};
+
+export type Step =
+  | { t: "baseline"; len: number; l: string; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" }
+  | { t: "mark"; p: [number, number]; l: string; dir: "cw" | "ccw" }
+  | { t: "ray"; l: string; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" }
+  | { t: "arc"; r: number; deg: number; cx: number; cy: number; dir: "cw" | "ccw"; l: string; a: [number, number]; b: [number, number] }
+  | { t: "bisect"; l1: string; l2: string; deg: number; type: "angle" | "line"; l: string; m: [number, number]; substeps: Step[]; dir: "cw" | "ccw" }
+  | { t: "compass"; deg: number; l: string; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" };
+
+export type DecompItem = number | `c${number}`;
+
+export type AngleResult = {
+  angle: number;
+  quadrant: 1 | 2 | 3 | 4;
+  gap: number;
+  from: string;
+  decomp: { full: DecompItem[]; gap: DecompItem[] };
+  steps: Step[];
 };
 
 export type AngleActorOutput = {
@@ -18,564 +43,295 @@ export type AngleActorOutput = {
   result: AngleResult;
 };
 
-type Quadrant = 1 | 2 | 3 | 4;
-type Direction = "cw" | "ccw";
-type Point = { x: number; y: number };
-type DecompItem = number | `c${number}`;
+// ─────────────────────────────────────────────
+// Initialization — the entry point that kicks off a job's whole loop
+// ─────────────────────────────────────────────
 
-type Step =
-  | { t: "baseline"; len: number; l: string; dir: Direction; a: [number, number]; b: [number, number] }
-  | { t: "mark"; p: [number, number]; l: string; dir: Direction }
-  | { t: "ray"; l: string; dir: Direction; a: [number, number]; b: [number, number] }
-  | { t: "arc"; r: number; deg: number; cx: number; cy: number; dir: Direction; l: string; a: [number, number]; b: [number, number] }
-  | { t: "bisect"; l1: string; l2: string; deg: number; type: "angle" | "line"; l: string; dir: Direction; m: [number, number]; substeps: Step[] }
-  | { t: "compass"; deg: number; l: string; dir: Direction; a: [number, number]; b: [number, number] };
-
-type AngleResult = {
-  angle: number;
-  quadrant: Quadrant;
-  gap: number;
-  from: string;
-  decomp: { full: DecompItem[]; gap: DecompItem[] };
-  steps: Step[];
+export type InitializedJob = {
+  angleDegrees: number;
+  quadrant: 1 | 2 | 3 | 4;
+  origin: Point;
 };
 
-type BuildState = {
-  vertexX: number;
-  vertexY: number;
-  direction: Direction;
-  currentAngle: number;
-  startAngle: number;
-  lastPointLabel: string;
-  nextMarkIndex: number;
-  steps: Step[];
-  rayAngles: Map<string, number>;
-};
+/**
+ * Starts a job: validates the requested angle, resolves and stores the
+ * current quadrant, positions the world-frame origin, and seeds
+ * dataStore with the fixed reference points (O, A, B, Vup, Vdown) every
+ * later construction step relies on. Everything downstream (decompose /
+ * recompose / construct) assumes this has already run for the job.
+ *
+ * World frame: origin sits at the paper's bottom-left, x increases
+ * right, y increases up — no negative coordinates, same as a standard
+ * first-quadrant xy graph. `border` (paperSize inset by 10mm) defines
+ * the actual drawable area within that frame.
+ *
+ * Origin placement depends on quadrant:
+ * - Q1/Q2 (0-180°): the sweep only needs room ABOVE the origin, so the
+ *   origin sits close to the base of the drawable area (min y).
+ * - Q3/Q4 (180-360°): standard math convention puts these below the
+ *   x-axis relative to the origin, so the sweep needs room both above
+ *   (for the baseline/arcs) and below (for the ray itself) — the origin
+ *   is centered vertically instead.
+ * x is centered either way, since the baseline (B-O-A) is symmetric
+ * about the origin regardless of quadrant.
+ */
+export function initializeAngleJob(job: AngleJob): InitializedJob {
+  if (!job || !job.payload) {
+    throw new Error("initializeAngleJob: job.payload is required");
+  }
 
-function initBuildState(originX: number, originY: number, direction: Direction): BuildState {
-  return {
-    vertexX: originX, vertexY: originY, direction, 
-    currentAngle: 0, startAngle: 0,
-    lastPointLabel: "B", nextMarkIndex: 1, 
-    steps: [], rayAngles: new Map(),
-  };
+  const { angleDegrees } = job.payload;
+
+  // 1. Validate — must be a real number strictly between 0 and 360
+  //    (i.e. 1-359 in whole degrees; 0/360 aren't constructible angles).
+  if (
+    typeof angleDegrees !== "number" ||
+    !Number.isFinite(angleDegrees) ||
+    angleDegrees <= MIN_VALID_ANGLE ||
+    angleDegrees >= MAX_VALID_ANGLE
+  ) {
+    throw new Error(
+      `initializeAngleJob: angleDegrees must be > ${MIN_VALID_ANGLE} and < ${MAX_VALID_ANGLE}, got ${angleDegrees}`
+    );
+  }
+
+  const helpers = new Helpers();
+
+  // Clean slate for this job — don't inherit points/instructions from
+  // whatever ran before.
+  helpers.resetState();
+
+  // 2. Quadrant — resolve, then push into module state.
+  const quadrant = helpers.getQuadrant(angleDegrees);
+  helpers.setQuadrant(quadrant);
+
+  // 3 & 4. Origin — bottom-left world frame, x always centered, y
+  //    depends on quadrant per the rule above.
+  const centerX = (border[0] + border[2]) / 2;
+  const baseY = border[1];
+  const centerY = (border[1] + border[3]) / 2;
+
+  const originPoint: Point =
+    quadrant === 1 || quadrant === 2 ? [centerX, baseY] : [centerX, centerY];
+
+  helpers.setOrigin(originPoint);
+
+  // 5. Seed dataStore with the reserved reference points, all relative
+  //    to origin: A/B are the baseline's right/left endpoints
+  //    (0°/180° reference). ASSUMPTION: A = 0° (positive x from O) and
+  //    Vup = 90° (positive y from O) — flag if the reference convention
+  //    should run the other way.
+  //
+  //    Vup/Vdown are placed a full rayLength from origin, and origin
+  //    only has that much room in ONE direction depending on quadrant
+  //    (Q1/Q2 sits near the base, so only Vup fits; Q3/Q4 sits centered,
+  //    which happens to give Vdown room but not a matching need for
+  //    Vup — QUADRANT_REFERENCE_LINE only ever looks up Vup for Q1 and
+  //    Vdown for Q3 anyway). So only the point the quadrant group
+  //    actually needs gets placed; the other is simply not written this
+  //    job, rather than risk landing off-page.
+  const halfBase = baseLineLength / 2;
+  const A: Point = [originPoint[0] + halfBase, originPoint[1]];
+  const B: Point = [originPoint[0] - halfBase, originPoint[1]];
+
+  const reservedPoints: Record<string, Point> = { O: originPoint, A, B };
+
+  if (quadrant === 1 || quadrant === 2) {
+    reservedPoints.Vup = [originPoint[0], originPoint[1] + rayLength];
+  } else {
+    reservedPoints.Vdown = [originPoint[0], originPoint[1] - rayLength];
+  }
+
+  helpers.setReservedPoints(reservedPoints);
+
+  return { angleDegrees, quadrant, origin: originPoint };
 }
 
-function nextLabel(state: BuildState, prefix: string): string {
-  const label = `${prefix}${state.nextMarkIndex}`;
-  state.nextMarkIndex++;
-  return label;
-}
+// ─────────────────────────────────────────────
+// Step mapping — fullTaskList → Step[]
+// ─────────────────────────────────────────────
 
-function pointOnCircle(centerX: number, centerY: number, radius: number, angleDegrees: number): Point {
-  const rad = (angleDegrees * Math.PI) / 180;
-  return {
-    x: Math.round(centerX + radius * Math.cos(rad)),
-    y: Math.round(centerY - radius * Math.sin(rad)), // Note: y is inverted in canvas
-  };
-}
+function mapInstructionsToSteps(
+  instructions: DrawInstruction[],
+  dir: "cw" | "ccw"
+): Step[] {
+  return instructions.map((instr): Step => {
+    const start = instr.start;
+    const end = instr.end;
+    const label = instr.label ?? "";
+    const radius = instr.radius ?? 0;
+    const center = instr.center;
+    const value = instr.value;
 
-function quadrantOf(angleDegrees: number): Quadrant {
-  const normalized = ((angleDegrees % 360) + 360) % 360;
-  if (normalized <= 90) return 1;
-  if (normalized <= 180) return 2;
-  if (normalized <= 270) return 3;
-  return 4;
-}
-
-function angleFromTo(fromX: number, fromY: number, toX: number, toY: number): number {
-  return Math.atan2(toY - fromY, toX - fromX) * 180 / Math.PI;
-}
-
-function decomposeAngle(angle: number): DecompItem[] {
-  // Simple decomposition for now
-  const parts: DecompItem[] = [];
-  let remaining = angle;
-  
-  // Try to use 120, 90, 60, 45, 30, 15
-  const knownAngles = [120, 90, 60, 45, 30, 15];
-  for (const known of knownAngles) {
-    while (remaining >= known - 0.01) {
-      parts.push(known);
-      remaining -= known;
+    switch (instr.task) {
+      case "horizontal":
+        return { t: "baseline", len: value, l: label, a: start, b: end, dir };
+      case "vertical":
+      case "ray":
+        return { t: "ray", l: label, a: start, b: end, dir };
+      case "arc":
+        return {
+          t: "arc",
+          r: radius,
+          deg: value,
+          cx: center?.[0] ?? 0,
+          cy: center?.[1] ?? 0,
+          dir,
+          l: label,
+          a: start,
+          b: end,
+        };
+      case "measure":
+        return { t: "compass", deg: value, l: label, a: start, b: end, dir };
+      case "mark":
+        return { t: "mark", p: start, l: label, dir };
     }
+  });
+}
+
+// ─────────────────────────────────────────────
+// runAngleJob — full construction pipeline
+// ─────────────────────────────────────────────
+
+export function runAngleJob(job: AngleJob): AngleActorOutput {
+  console.log("[angleActor] Received job:", job);
+
+  const { angleDegrees, quadrant } = initializeAngleJob(job);
+
+  const construct = new Construct();
+  const { helpers, draws, special } = construct;
+  const dir = QUADRANT_SWEEP_DIRECTION[quadrant];
+
+  const decomposition = helpers.decompose(angleDegrees);
+  // Prefer the dedicated constructor when the requested angle is itself
+  // constructable. The generic complexity optimiser can express 120° as
+  // 60° + 60°, but the actor's follow-up stage performs bisections, not
+  // additive sweeps, so the second 60° would otherwise be a no-op.
+  const task = BASE_CONSTRUCTABLE_ANGLES.includes(angleDegrees)
+    ? [angleDegrees]
+    : [...decomposition.angles];
+  const { remainder } = decomposition;
+
+  let lastDrawnAngle = 0;
+  let axes: Line;
+  let lastDrawnLines: [Line, Line];
+
+  const pinpoint = "O";
+  // A and B are the endpoints of the 80 mm baseline, with O at its
+  // midpoint.  The compass constructions use those endpoints as circle
+  // centers/on-arc points, so their radius must be half the baseline.
+  const baseArcRadius = baseLineLength / 2;
+  const bisectRadius = baseArcRadius;
+  const direction: "cw" | "ccw" = dir;
+
+  // The 60°/120° constructors use axes[0] as a compass pivot on the
+  // construction circle.  Q3 starts from the 180° side (B); all other
+  // quadrants start from the 0°/360° side (A).
+  axes = quadrant === 3 ? ["B", "B"] : ["A", "A"];
+
+  lastDrawnLines = [axes, axes];
+
+  if (task.length > 0 && !BASE_CONSTRUCTABLE_ANGLES.includes(task[0])) {
+    const chain = helpers.recompose(task[0]);
+    task.splice(0, 1, ...chain);
   }
-  if (remaining > 0.5) {
-    parts.push(`c${Math.round(remaining)}` as const);
-  }
-  return parts;
-}
 
-function drawBaseline(state: BuildState): void {
-  const { vertexX, vertexY, direction } = state;
-  const left = { x: vertexX - BASELINE_LEN / 2, y: vertexY };
-  const right = { x: vertexX + BASELINE_LEN / 2, y: vertexY };
-  
-  state.steps.push({ 
-    t: "baseline", len: BASELINE_LEN, l: "AB", dir: direction, 
-    a: [left.x, vertexY], b: [right.x, vertexY] 
-  });
-  state.steps.push({ t: "mark", p: [vertexX, vertexY], l: "O", dir: direction });
-  state.steps.push({ t: "mark", p: [left.x, vertexY], l: "A", dir: direction });
-  state.steps.push({ t: "mark", p: [right.x, vertexY], l: "B", dir: direction });
-  
-  state.lastPointLabel = "O";
-  state.rayAngles.set("O", 0);
-  state.rayAngles.set("A", 180);
-  state.rayAngles.set("B", 0);
-}
+  try {
+    for (let i = 0; i < task.length; i++) {
+      if (i === 0) {
+        const firstEdge = construct.construct(task[0], {
+          baseArcRadius,
+          bisectRadius,
+          axes,
+          direction,
+          pinpoint,
+        });
+        lastDrawnLines = [axes, firstEdge];
+        lastDrawnAngle = task[0];
+        continue;
+      }
 
-function drawVerticalLine(state: BuildState): void {
-  const { vertexX, vertexY, direction } = state;
-  const top = { x: vertexX, y: vertexY - BASELINE_LEN / 2 };
-  const bottom = { x: vertexX, y: vertexY + BASELINE_LEN / 2 };
-  
-  state.steps.push({ t: "ray", l: "VU", dir: direction, a: [vertexX, vertexY], b: [top.x, top.y] });
-  state.steps.push({ t: "ray", l: "VD", dir: direction, a: [vertexX, vertexY], b: [bottom.x, bottom.y] });
-  state.steps.push({ t: "mark", p: [top.x, top.y], l: "VUP", dir: direction });
-  state.steps.push({ t: "mark", p: [bottom.x, bottom.y], l: "VDOWN", dir: direction });
-  
-  state.rayAngles.set("VUP", 90);
-  state.rayAngles.set("VDOWN", 270);
-}
+      const { remainderAngle, lines } = helpers.lastDrawnRemainder(
+        quadrant,
+        lastDrawnAngle,
+        lastDrawnLines
+      );
 
-// Build 60° angle from current position
-function build60(state: BuildState): string {
-  const { vertexX, vertexY, direction, currentAngle } = state;
-  const r = ARC_RADIUS;
-  const sign = direction === "cw" ? -1 : 1;
-  
-  // Point on circle at current angle
-  const start = pointOnCircle(vertexX, vertexY, r, currentAngle);
-  // End point at currentAngle + 60°
-  const end = pointOnCircle(vertexX, vertexY, r, currentAngle + sign * 60);
-  // Intersection point for 60° construction
-  const mid = pointOnCircle(start.x, start.y, r, currentAngle + sign * 120);
-  
-  const markLabel = nextLabel(state, "M");
-  const arcLabel = `arc60_${state.nextMarkIndex - 1}`;
-  const oppositeDir: Direction = direction === "cw" ? "ccw" : "cw";
-  
-  state.steps.push(
-    { t: "arc", r, deg: 60, cx: vertexX, cy: vertexY, dir: direction, l: arcLabel, a: [start.x, start.y], b: [end.x, end.y] },
-    { t: "arc", r, deg: 60, cx: start.x, cy: start.y, dir: oppositeDir, l: arcLabel, a: [vertexX, vertexY], b: [mid.x, mid.y] },
-    { t: "mark", p: [mid.x, mid.y], l: markLabel, dir: direction },
-  );
-  
-  state.currentAngle = currentAngle + sign * 60;
-  state.lastPointLabel = markLabel;
-  state.rayAngles.set(markLabel, state.currentAngle);
-  
-  return markLabel;
-}
+      const referenceLine = lines[1];
+      // target = remainder / 2^halvings.  The previous expression divided
+      // by two, which gave 0.5 for the common 60° -> 30° case and skipped
+      // the required bisection.
+      const halvings = Math.log2(remainderAngle / task[i]);
 
-// Build 90° angle from current position
-function build90(state: BuildState): string {
-  const {
-    vertexX,
-    vertexY,
-    direction,
-    currentAngle,
-  } = state;
+      if (!Number.isFinite(halvings) || halvings < 0 || !Number.isInteger(halvings)) {
+        draws.drawMeasure(lines[0]);
+        lastDrawnLines = lines;
+      } else {
+        let bisectAngle = remainderAngle;
+        let workingLine = lines[1];
 
-  const r = ARC_RADIUS;
-  const sign = direction === "cw" ? -1 : 1;
+        for (let j = 0; j < halvings; j++) {
+          const { intersectionLetter } = special.bisect(
+            [referenceLine, workingLine],
+            bisectAngle,
+            pinpoint
+          );
+          workingLine = [pinpoint, intersectionLetter];
+          bisectAngle = bisectAngle / 2;
+        }
 
-  // ========================================================
-  // A = left end of baseline
-  // B = right end of baseline
-  // O = center point (vertex)
-  // ========================================================
+        lastDrawnLines = [referenceLine, workingLine];
+      }
 
-  const aPoint = { x: vertexX - r, y: vertexY };
-  const bPoint = { x: vertexX + r, y: vertexY };
-  const oPoint = { x: vertexX, y: vertexY };
-
-  // ========================================================
-  // INTERSECTION POINT
-  // ========================================================
-  //
-  // Two circles of radius r centered at A and B intersect
-  // at points directly above and below O.
-  //
-  // The distance from O to the intersection is sqrt(3) * r.
-  //
-  // ========================================================
-
-  const intersectionDistance = r * Math.sqrt(3);
-  const finalPoint = pointOnCircle(
-    vertexX,
-    vertexY,
-    intersectionDistance,
-    currentAngle + sign * 90
-  );
-
-  const finalLabel = nextLabel(state, "M");
-  const arcLabel = `arc90_${state.nextMarkIndex - 1}`;
-
-  // ========================================================
-  // ARC 1 — From A (left end), sweeping top and bottom
-  // ========================================================
-
-  state.steps.push({
-    t: "arc",
-    r,
-    deg: 180,
-
-    cx: aPoint.x,
-    cy: aPoint.y,
-
-    dir: direction,
-
-    l: `${arcLabel}_fromA`,
-
-    a: [aPoint.x, aPoint.y - r],
-    b: [finalPoint.x, finalPoint.y],
-  });
-
-  // ========================================================
-  // ARC 2 — From B (right end), sweeping top and bottom
-  // ========================================================
-
-  state.steps.push({
-    t: "arc",
-    r,
-    deg: 180,
-
-    cx: bPoint.x,
-    cy: bPoint.y,
-
-    dir: direction,
-
-    l: `${arcLabel}_fromB`,
-
-    a: [bPoint.x, bPoint.y - r],
-    b: [finalPoint.x, finalPoint.y],
-  });
-
-  // ========================================================
-  // MARK INTERSECTION AND DRAW RAY
-  // ========================================================
-
-  state.steps.push({
-    t: "mark",
-
-    p: [finalPoint.x, finalPoint.y],
-
-    l: finalLabel,
-
-    dir: direction,
-  });
-
-  // ========================================================
-  // UPDATE STATE
-  // ========================================================
-
-  state.currentAngle = currentAngle + sign * 90;
-  state.lastPointLabel = finalLabel;
-  state.rayAngles.set(finalLabel, state.currentAngle);
-
-  return finalLabel;
-}
-// Build 120° angle using proper geometric construction
-function build120(state: BuildState): string {
-  const { vertexX, vertexY, direction, currentAngle } = state;
-  const r = ARC_RADIUS;
-  const sign = direction === "cw" ? -1 : 1;
-  
-  // B = point at 0° on baseline
-  const bPoint = pointOnCircle(vertexX, vertexY, r, currentAngle);
-  
-  // R = 60° point on main arc (intersection of Arc 1 & Arc 2)
-  const rPoint = pointOnCircle(vertexX, vertexY, r, currentAngle + sign * 60);
-  
-  // P = 120° point on main arc
-  const pPoint = pointOnCircle(vertexX, vertexY, r, currentAngle + sign * 120);
-  
-  const markR = nextLabel(state, "M");
-  const markP = nextLabel(state, "M");
-  const arcLabel = `arc120_${state.nextMarkIndex - 2}`;
-  
-  // Arc 1: Main arc centered at O, from B (0°) to P (120°) CCW
-  state.steps.push({
-    t: "arc", 
-    r, 
-    deg: 120, 
-    cx: vertexX, 
-    cy: vertexY, 
-    dir: "ccw",
-    l: arcLabel, 
-    a: [bPoint.x, bPoint.y], 
-    b: [pPoint.x, pPoint.y]
-  });
-  
-  // Arc 2: Centered at B (0° point), radius r, clockwise, 60°
-  // Finds R (60° point) on the main arc
-  state.steps.push({
-    t: "arc",
-    r,
-    deg: 60,
-    cx: bPoint.x,
-    cy: bPoint.y,
-    dir: "cw",
-    l: arcLabel,
-    a: [vertexX, vertexY],
-    b: [rPoint.x, rPoint.y]
-  });
-  
-  state.steps.push({
-    t: "mark",
-    p: [rPoint.x, rPoint.y],
-    l: markR,
-    dir: "ccw"
-  });
-  
-  // Arc 3: Centered at R (60° point), radius r, clockwise, 60°
-  // Finds P (120° point) on the main arc
-  state.steps.push({
-    t: "arc",
-    r,
-    deg: 60,  // FIXED: was 120°, now 60°
-    cx: rPoint.x,
-    cy: rPoint.y,
-    dir: "cw",
-    l: arcLabel,
-    a: [bPoint.x, bPoint.y],
-    b: [pPoint.x, pPoint.y]
-  });
-  
-  state.steps.push({
-    t: "mark",
-    p: [pPoint.x, pPoint.y],
-    l: markP,
-    dir: "ccw"
-  });
-  
-  state.currentAngle = currentAngle + sign * 120;
-  state.lastPointLabel = markP;
-  state.rayAngles.set(markR, currentAngle + sign * 60);
-  state.rayAngles.set(markP, state.currentAngle);
-  
-  return markP;
-}
-
-// Build a compass remainder (simple arc swing)
-function buildCompass(state: BuildState, degrees: number): string {
-  const { vertexX, vertexY, direction, currentAngle } = state;
-  const r = ARC_RADIUS;
-  const sign = direction === "cw" ? -1 : 1;
-  
-  const start = pointOnCircle(vertexX, vertexY, r, currentAngle);
-  const end = pointOnCircle(vertexX, vertexY, r, currentAngle + sign * degrees);
-  const markLabel = nextLabel(state, "M");
-  
-  state.steps.push(
-    { t: "arc", r, deg: degrees, cx: vertexX, cy: vertexY, dir: "ccw", l: `arc${degrees}_${state.nextMarkIndex - 1}`, a: [start.x, start.y], b: [end.x, end.y] },
-    { t: "mark", p: [end.x, end.y], l: markLabel, dir: direction },
-  );
-  
-  state.currentAngle = currentAngle + sign * degrees;
-  state.lastPointLabel = markLabel;
-  state.rayAngles.set(markLabel, state.currentAngle);
-  
-  return markLabel;
-}
-
-// Build a specific known angle
-function buildAngle(state: BuildState, degrees: number): string {
-  if (degrees === 60) return build60(state);
-  if (degrees === 90) return build90(state);
-  if (degrees === 120) return build120(state);
-  if (degrees === 45) {
-    // 45° = 90° bisected
-    const ninetyLabel = build90(state);
-    return bisectAngle(state, "O", ninetyLabel, 45);
-  }
-  if (degrees === 30) {
-    // 30° = 60° bisected
-    const sixtyLabel = build60(state);
-    return bisectAngle(state, "O", sixtyLabel, 30);
-  }
-  if (degrees === 15) {
-    // 15° = 60° bisected twice
-    const sixtyLabel = build60(state);
-    const thirtyLabel = bisectAngle(state, "O", sixtyLabel, 30);
-    return bisectAngle(state, "O", thirtyLabel, 15);
-  }
-  return buildCompass(state, degrees);
-}
-
-// Bisect an angle between two rays
-function bisectAngle(state: BuildState, line1Label: string, line2Label: string, targetDegrees: number): string {
-  const { vertexX, vertexY, direction } = state;
-  const angle1 = state.rayAngles.get(line1Label) ?? 0;
-  const angle2 = state.rayAngles.get(line2Label) ?? 0;
-  const midAngle = (angle1 + angle2) / 2;
-  
-  const r = ARC_RADIUS;
-  const bisectRadius = r / 2;
-  
-  // Points on the arcs
-  const p1 = pointOnCircle(vertexX, vertexY, r, angle1);
-  const p2 = pointOnCircle(vertexX, vertexY, r, angle2);
-  const pMid = pointOnCircle(vertexX, vertexY, r, midAngle);
-  
-  // Points for the bisection arcs (radius r/2)
-  const b1 = pointOnCircle(vertexX, vertexY, bisectRadius, angle1);
-  const b2 = pointOnCircle(vertexX, vertexY, bisectRadius, angle2);
-  const bMid = pointOnCircle(vertexX, vertexY, bisectRadius, midAngle);
-  
-  const markLabel = nextLabel(state, "M");
-  const substeps: Step[] = [];
-  
-  // Arc 1: from b1 to bMid
-  substeps.push({
-    t: "arc",
-    r: bisectRadius,
-    deg: Math.abs(midAngle - angle1),
-    cx: vertexX,
-    cy: vertexY,
-    dir: direction,
-    l: `bisect_arc_${state.nextMarkIndex}`,
-    a: [b1.x, b1.y],
-    b: [bMid.x, bMid.y],
-  });
-  
-  // Arc 2: from b2 to bMid
-  substeps.push({
-    t: "arc",
-    r: bisectRadius,
-    deg: Math.abs(midAngle - angle2),
-    cx: vertexX,
-    cy: vertexY,
-    dir: direction,
-    l: `bisect_arc_${state.nextMarkIndex + 1}`,
-    a: [b2.x, b2.y],
-    b: [bMid.x, bMid.y],
-  });
-  
-  // Mark the midpoint
-  substeps.push({
-    t: "mark",
-    p: [pMid.x, pMid.y],
-    l: markLabel,
-    dir: direction,
-  });
-  
-  // Draw the bisector ray
-  const rayEnd = pointOnCircle(vertexX, vertexY, RAY_LEN, midAngle);
-  substeps.push({
-    t: "ray",
-    l: `bisect_ray_${state.nextMarkIndex + 2}`,
-    dir: direction,
-    a: [vertexX, vertexY],
-    b: [rayEnd.x, rayEnd.y],
-  });
-  
-  state.steps.push({
-    t: "bisect",
-    l1: line1Label,
-    l2: line2Label,
-    deg: targetDegrees,
-    type: "angle",
-    l: `bisect_${state.nextMarkIndex + 3}`,
-    dir: direction,
-    m: [pMid.x, pMid.y],
-    substeps,
-  });
-  
-  state.currentAngle = midAngle;
-  state.lastPointLabel = markLabel;
-  state.rayAngles.set(markLabel, midAngle);
-  
-  return markLabel;
-}
-
-// Build all steps for a given angle
-function buildAllSteps(originX: number, originY: number, angleDegrees: number): Step[] {
-  const state = initBuildState(originX, originY, "ccw");
-  const quadrant = quadrantOf(angleDegrees);
-  
-  // Draw baseline and vertical line
-  drawBaseline(state);
-  drawVerticalLine(state);
-  
-  // Reset to baseline for construction
-  state.currentAngle = 0;
-  state.startAngle = 0;
-  state.lastPointLabel = "O";
-  state.rayAngles.set("O", 0);
-  
-  // Build the angle
-  const decomposition = decomposeAngle(angleDegrees);
-  let accumulated = 0;
-  
-  for (const part of decomposition) {
-    if (typeof part === "string") {
-      const deg = parseFloat(part.slice(1));
-      buildCompass(state, deg);
-      accumulated += deg;
-    } else {
-      buildAngle(state, part);
-      accumulated += part;
+      lastDrawnAngle = task[i];
     }
+  } catch (e) {
+    console.log("[angleActor] Construction stopped early:", e);
   }
-  
-  // Draw final ray
-  const end = pointOnCircle(originX, originY, RAY_LEN, state.currentAngle);
-  const arcStart = pointOnCircle(originX, originY, ARC_RADIUS, state.startAngle);
-  const arcEnd = pointOnCircle(originX, originY, ARC_RADIUS, state.currentAngle);
-  
-  state.steps.push({
-    t: "arc",
-    r: ARC_RADIUS,
-    deg: Math.abs(state.currentAngle - state.startAngle),
-    cx: originX,
-    cy: originY,
-    dir: "ccw",
-    l: "angle_arc",
-    a: [arcStart.x, arcStart.y],
-    b: [arcEnd.x, arcEnd.y],
-  });
-  
-  state.steps.push({
-    t: "ray",
-    l: "final",
-    dir: "ccw",
-    a: [originX, originY],
-    b: [end.x, end.y],
-  });
-  
-  return state.steps;
+
+  // Angles below the smallest known construction (or exactly on a Q3/Q4
+  // reference boundary) have no base chunk.  They are represented by a
+  // compass gap, but still need a stable, visible reference construction.
+  if (task.length === 0) {
+    draws.drawHorizontal(["B", "A"]);
+    draws.drawMark(pinpoint);
+  }
+
+  const steps = mapInstructionsToSteps(fullTaskList, dir);
+
+  const full: DecompItem[] = [...task];
+  if (remainder > 0) full.push(`c${remainder}`);
+  const from = task.length > 0 ? `${task[task.length - 1]}°` : "0°";
+
+  const output: AngleActorOutput = {
+    label: "done",
+    jobId: job.id,
+    agent: "angleActor",
+    result: {
+      angle: angleDegrees,
+      quadrant,
+      gap: remainder,
+      from,
+      decomp: {
+        full,
+        gap: remainder > 0 ? [`c${remainder}`] : [],
+      },
+      steps,
+    },
+  };
+
+  console.log("[angleActor] Final output:", JSON.stringify(output, null, 2));
+
+  return output;
 }
+
+// ─────────────────────────────────────────────
+// Actor — connection to the state machine
+// ─────────────────────────────────────────────
 
 export const angleActor = fromPromise<AngleActorOutput, AngleActorInput>(
   async ({ input }) => {
     if (!input.job) throw new Error("angleActor requires a job");
-
-    const { angleDegrees } = input.job.payload;
-    const quadrant = quadrantOf(angleDegrees);
-
-    const originX = PAPER_WIDTH / 2;
-    const originY = PAPER_HEIGHT / 2;
-
-    const steps = buildAllSteps(originX, originY, angleDegrees);
-    
-    const fullDecomposition = decomposeAngle(angleDegrees);
-    const gapDecomposition = decomposeAngle(angleDegrees);
-
-    return {
-      label: "done",
-      jobId: input.job.id,
-      agent: "angleActor",
-      result: { 
-        angle: angleDegrees, 
-        quadrant, 
-        gap: angleDegrees, 
-        from: "baseline (0°)", 
-        decomp: { full: fullDecomposition, gap: gapDecomposition }, 
-        steps 
-      },
-    };
-  },
+    return runAngleJob(input.job);
+  }
 );

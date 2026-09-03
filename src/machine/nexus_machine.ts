@@ -258,7 +258,10 @@ const machine = setup({
     },
     cueError: {
       entry: assign({
-        lastError: ({ event }) => (event as any).output,
+        // XState invoke failures are carried in `event.error`, not
+        // `event.output`. Keeping it lets FlowGraph show the real API/DB
+        // failure instead of an empty error panel.
+        lastError: ({ event }) => (event as any).error ?? (event as any).output,
       }),
       always: {
         target: "#nexus.idle",
