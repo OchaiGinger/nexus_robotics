@@ -1,13 +1,11 @@
+// src/actors/rosActor.ts
 import { fromPromise } from "xstate";
+import { publishToRos } from "@/lib/rosBridge";
 
 type RosActorInput = {
-  job: {
-    id: string;
-    payload: unknown;
-  };
-  // which branch of the middleman parallel state this execution belongs to
+  job: { id: string; payload: unknown };
+  actionId: string;
   source: "robot" | "human";
-  // robotPlan (robot branch) or humanResult (human branch)
   payload: unknown;
 };
 
@@ -15,36 +13,22 @@ type RosActorOutput = {
   label: "done";
   jobId: string;
   source: "robot" | "human";
-  rosResult: unknown;
+  acked: true;
 };
 
 export const rosActor = fromPromise<RosActorOutput, RosActorInput>(
   async ({ input }) => {
-    const { job, source, payload } = input;
+    const { job, actionId, source, payload } = input;
+    if (!job) throw new Error("rosActor requires a job");
+    if (!actionId) throw new Error("rosActor requires an actionId");
 
-    if (!job) {
-      throw new Error("rosActor requires a job");
-    }
-
-    // publish/execute against ROS and await the execution result, tagged
-    // with which branch (robot/human) it came from so the validator can
-    // tell them apart
-    const rosResult = await executeOnRos(job, source, payload);
+    const ack = await publishToRos(actionId, source, payload);
 
     return {
       label: "done",
       jobId: job.id,
       source,
-      rosResult,
+      acked: ack.acked,
     };
   },
 );
-
-// replace with real ROS bridge logic (rosbridge/rclnodejs/etc.)
-async function executeOnRos(
-  job: RosActorInput["job"],
-  source: RosActorInput["source"],
-  payload: unknown,
-): Promise<unknown> {
-  return {};
-}

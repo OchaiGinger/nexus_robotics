@@ -285,7 +285,7 @@ export function runAngleJob(job: AngleJob): AngleActorOutput {
 
       lastDrawnAngle = task[i];
     }
-  } catch (e) {
+    } catch (e) {
     console.log("[angleActor] Construction stopped early:", e);
   }
 
@@ -297,8 +297,16 @@ export function runAngleJob(job: AngleJob): AngleActorOutput {
     draws.drawMark(pinpoint);
   }
 
-  const steps = mapInstructionsToSteps(fullTaskList, dir);
+  // The overall decomposition remainder (the leftover angle decompose()
+  // couldn't express via known constructible angles) isn't reachable by
+  // straightedge/compass — log it as a measured (protractor) step from
+  // the last constructed line, same convention as the mid-loop halving
+  // fallback above.
+  if (remainder > 0) {
+    draws.drawMeasure(lastDrawnLines[1]);
+  }
 
+  const steps = mapInstructionsToSteps(fullTaskList, dir);
   const full: DecompItem[] = [...task];
   if (remainder > 0) full.push(`c${remainder}`);
   const from = task.length > 0 ? `${task[task.length - 1]}°` : "0°";

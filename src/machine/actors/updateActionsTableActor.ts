@@ -1,37 +1,24 @@
 // src/actors/updateActionsTableActor.ts
 import { fromPromise } from "xstate";
-import { ActionPair } from "./types";
 
-type UpdateActionsTableActorInput = {
-  job: { id: string; payload: unknown };
-  actionsResult: {
-    label: "done";
-    jobId: string;
-    pair: ActionPair;
-  };
-  validationResult: {
-    label: "done";
-    jobId: string;
-    robotCorrect: boolean;
-    humanCorrect: boolean;
-    valid: boolean;
-  };
+export type UpdateActionsTableActorInput = {
+  actionId: string;
+  status: "pending" | "completed";
 };
 
 type UpdateActionsTableActorOutput = {
-  actionsResult: {
-    label: "done";
-    jobId: string;
-    pair: ActionPair; // was `unknown`
-  };
+  label: "done";
+  actionId: string;
+  status: "pending" | "completed";
+  pair: unknown;
 };
 
 export const updateActionsTableActor = fromPromise<
   UpdateActionsTableActorOutput,
   UpdateActionsTableActorInput
 >(async ({ input }) => {
-  if (!input.actionsResult)
-    throw new Error("updateActionsTableActor requires an actionsResult");
+  if (!input.actionId || !input.status)
+    throw new Error("actionId and status are required");
 
   const res = await fetch("/api/actors/update-actions-table", {
     method: "POST",

@@ -17,6 +17,7 @@ import { toolSmithActor } from "./actors/toolSmithActor";
 import { toolAppendActor } from "./actors/toolAppendActor";
 import { atomizerActor } from "./actors/atomizerActor";
 import { createActionsTableActor } from "./actors/createActionsTableActor";
+import { nextActionActor } from "./actors/nextActionActor";
 
 // delegator subagents
 import { cameraPositionActor } from "./actors/cameraPositionActor";
@@ -27,6 +28,7 @@ import { humanInterpreterActor } from "./actors/humanInterpreterActor";
 import { rosActor } from "./actors/rosActor";
 import { validatorActor } from "./actors/validatorActor";
 import { updateActionsTableActor } from "./actors/updateActionsTableActor";
+import type { UpdateActionsTableActorInput } from "./actors/updateActionsTableActor";
 import { ActionPair } from "./actors/types";
 
 // Named context type — explicitly annotated on every `input: ({ context }) => ...`
@@ -44,7 +46,15 @@ type NexusContext = {
     type: "projectionAgent" | "angleAgent" | "gearAgent" | "polygonAgent";
     payload: unknown;
   };
+  jobId?: string;
   sortGroupId?: string;
+  sortGroups?: Array<{
+    id: string;
+    order: number;
+    difficulty: number;
+    taskIds: string[];
+    taskTypes: string[];
+  }>;
   agentResult?: {
     label: "done";
     jobId: string;
@@ -56,24 +66,45 @@ type NexusContext = {
     jobId: string;
     tools: unknown;
   };
-  // one action pair at a time — the atomizer hands back exactly one
-  // pair per call (same as the director handing back exactly one task
-  // at a time from the job's payload), so there's no array/cursor to
-  // track here. The pair also carries whatever cameraPositionActor and
-  // delegatorActor have enriched it with (toolLocation, role, etc.) —
-  // there's no separate `cameraPosition` context field anymore, since
-  // that data now travels on the pair itself.
+
+  // Full flattened atom breakdown for the current batch, produced once
+  // by atomizerActor and bulk-persisted by createActionsTableActor.
+  // Not touched again after that — nextActionActor reads from the
+  // Action table directly, not from this array.
+  actions?: Array<{
+    taskId: string;
+    atomIndex: number;
+    atomType: string;
+    pair: unknown;
+  }>;
+
+  // The single Action row currently being worked, set by nextActionActor
+  // and read through the whole delegator branch.
+  actionId?: string;
+
+  // one action pair at a time — the pair currently being worked. Also
+  // carries whatever cameraPositionActor and delegatorActor have
+  // enriched it with (toolLocation, role, etc.) — there's no separate
+  // `cameraPosition` context field anymore, since that data now travels
+  // on the pair itself.
   actionsResult?: {
     label: "done";
     jobId: string;
     pair: ActionPair;
   };
+  dispatchMode?: "single" | "both";
+  dispatchRole?: "robot" | "human";
   // delegator context
   robotPlan?: unknown;
   humanInstructions?: unknown;
   humanResult?: unknown;
   robotRosResult?: unknown;
   humanRosResult?: unknown;
+  // per-side validation outcomes for the "both" (simultaneous
+  // robot+human) branch — each region sets its own half independently
+  // as soon as its side passes; the branch only completes once both are set.
+  robotValidation?: { robotCorrect: boolean };
+  humanValidation?: { humanCorrect: boolean };
   validationResult?: {
     label: "done";
     jobId: string;
@@ -109,6 +140,7 @@ const machine = setup({
     toolAppendActor,
     atomizerActor,
     createActionsTableActor,
+    nextActionActor,
 
     cameraPositionActor,
     delegatorActor,
@@ -141,20 +173,33 @@ const machine = setup({
     // .label, same as isNextBatchFromQueue below it.
     isNewJobFromQueue: ({ event }) => (event as any).output?.label === "newJob",
 
-    // atomizer routing (action/task/job loop)
-    isAtomizerActions: ({ event }) =>
-      (event as any).output?.route === "actions",
-    isAtomizerTaskDoneMoreTasks: ({ event }) =>
-      (event as any).output?.route === "taskDone" &&
-      (event as any).output?.hasMoreTasks === true,
-    isAtomizerAllTasksDone: ({ event }) =>
-      (event as any).output?.route === "taskDone" &&
-      (event as any).output?.hasMoreTasks !== true,
+    // nextAction routing — replaces the old atomizer loop guards
+    // (isAtomizerActions / isAtomizerTaskDoneMoreTasks /
+    // isAtomizerAllTasksDone), which are gone now that atomization
+    // happens once per batch up front instead of one atom at a time.
+    isActionFound: ({ event }) => (event as any).output?.route === "action",
+    isAllActionsDone: ({ event }) =>
+      (event as any).output?.route === "allActionsDone",
 
     // delegator routing — decided by delegatorActor based on the atom's
-    // atomType (see delegatorActor's ATOM_ROLE table)
-    isRobotAction: ({ event }) => (event as any).output?.role === "robot",
-    isHumanAction: ({ event }) => (event as any).output?.role === "human",
+    // atomType (see delegatorActor's ATOM_ROLE table). A pair can now
+    // carry either one atom (single actor) or two simultaneous atoms
+    // (robot + human working at once) — delegatorActor reports which
+    // case this is via .mode.
+    isRobotAction: ({ event }) =>
+      (event as any).output?.mode === "single" &&
+      (event as any).output?.role === "robot",
+    isHumanAction: ({ event }) =>
+      (event as any).output?.mode === "single" &&
+      (event as any).output?.role === "human",
+    isBothActions: ({ event }) => (event as any).output?.mode === "both",
+
+    // per-branch validator outcomes for the "both" region — each side is
+    // checked independently against its own ROS result.
+    isRobotCorrect: ({ event }) => (event as any).output?.robotCorrect === true,
+    isRobotIncorrect: ({ event }) => (event as any).output?.robotCorrect !== true,
+    isHumanCorrect: ({ event }) => (event as any).output?.humanCorrect === true,
+    isHumanIncorrect: ({ event }) => (event as any).output?.humanCorrect !== true,
 
     // only advance to the next pair once the validator approves the
     // current one — otherwise retry it
@@ -168,16 +213,24 @@ const machine = setup({
   context: {
     origin: undefined,
     job: undefined,
+    jobId: undefined,
     sortGroupId: undefined,
+    sortGroups: undefined,
     agentResult: undefined,
     toolResult: undefined,
+    actions: undefined,
+    actionId: undefined,
     actionsResult: undefined,
+    dispatchMode: undefined,
+    dispatchRole: undefined,
 
     robotPlan: undefined,
     humanInstructions: undefined,
     humanResult: undefined,
     robotRosResult: undefined,
     humanRosResult: undefined,
+    robotValidation: undefined,
+    humanValidation: undefined,
     validationResult: undefined,
 
     lastError: undefined,
@@ -190,6 +243,8 @@ const machine = setup({
           actions: assign({
             origin: "newJob",
             job: ({ event }) => (event as any).job,
+            jobId: ({ event }) => (event as any).job?.id,
+            sortGroups: undefined,
           }),
           reenter: true,
         },
@@ -269,7 +324,9 @@ const machine = setup({
         actions: assign({
           origin: undefined,
           job: undefined,
+          jobId: undefined,
           sortGroupId: undefined,
+          sortGroups: undefined,
           toolResult: undefined,
         }),
       },
@@ -342,10 +399,10 @@ const machine = setup({
       },
     },
 
-    // director: atomize a task into action pairs, then execute each pair
-    // through the delegator (camera -> delegate -> robot OR human ->
-    // validator), looping back here for the next pair/task until the
-    // whole job is done.
+    // director: atomize the whole batch's pending tasks into a flat list
+    // of atom-pairs in one shot, then bulk-persist them as "waiting"
+    // Action rows. The walk-one-at-a-time loop lives outside this state,
+    // in nextAction / updateActionPending / delegator / validator.
     director: {
       initial: "atomize",
       states: {
@@ -355,43 +412,14 @@ const machine = setup({
             id: "AtomizerActor",
             input: ({ context }: { context: NexusContext }) => ({
               job: context.job!,
-              toolResult: context.toolResult,
-              actionsResult: context.actionsResult,
-              validationResult: context.validationResult,
             }),
-            onDone: [
-              {
-                target: "createActionsTable",
-                guard: "isAtomizerActions",
-                actions: assign({
-                  actionsResult: ({ event }) => ({
-                    label: "done" as const,
-                    jobId: (event.output as any).jobId,
-                    pair: (event.output as any).pair,
-                  }),
-                }),
-                reenter: true,
-              },
-              {
-                target: "atomize",
-                guard: "isAtomizerTaskDoneMoreTasks",
-                actions: assign({
-                  actionsResult: undefined,
-                  validationResult: undefined,
-                }),
-                reenter: true,
-              },
-              {
-                target: "#nexus.orchestrator",
-                guard: "isAtomizerAllTasksDone",
-                actions: assign({
-                  origin: "nextBatch",
-                  actionsResult: undefined,
-                  validationResult: undefined,
-                }),
-                reenter: true,
-              },
-            ],
+            onDone: {
+              target: "createActionsTable",
+              actions: assign({
+                actions: ({ event }) => (event.output as any).actions,
+              }),
+              reenter: true,
+            },
             onError: { target: "#nexus", reenter: true },
           },
         },
@@ -401,26 +429,83 @@ const machine = setup({
             src: "createActionsTableActor",
             id: "CreateActionsTableActor",
             input: ({ context }: { context: NexusContext }) => ({
-              actionsResult: context.actionsResult!,
+              jobId: context.jobId!,
+              actions: context.actions!,
             }),
-            onDone: {
-              target: "#nexus.delegator",
-              actions: assign({
-                actionsResult: ({ event }) => event.output as any,
-              }),
-              reenter: true,
-            },
+            onDone: { target: "#nexus.nextAction", reenter: true },
             onError: { target: "#nexus", reenter: true },
           },
         },
       },
     },
 
+    // nextAction: finds the next "waiting" Action row for this job (in
+    // task-order, atom-order). If found, hands its pair into context and
+    // moves to mark it "pending" before the delegator works it. If none
+    // are left, the whole batch's actions are done — back to the
+    // orchestrator to advance to the next batch.
+    nextAction: {
+      invoke: {
+        src: "nextActionActor",
+        id: "NextActionActor",
+        input: ({ context }: { context: NexusContext }) => ({
+          jobId: context.jobId!,
+        }),
+        onDone: [
+          {
+            target: "updateActionPending",
+            guard: "isActionFound",
+            actions: assign({
+              actionId: ({ event }) => (event.output as any).actionId,
+              actionsResult: ({ context, event }) => ({
+                label: "done" as const,
+                jobId: context.jobId!,
+                pair: (event.output as any).pair,
+              }),
+              // clear any leftover per-side validation state from a
+              // previous "both" action before starting the next one
+              robotValidation: undefined,
+              humanValidation: undefined,
+            }),
+            reenter: true,
+          },
+          {
+            target: "orchestrator",
+            guard: "isAllActionsDone",
+            actions: assign({
+              origin: "nextBatch",
+              actionId: undefined,
+              actionsResult: undefined,
+              actions: undefined,
+            }),
+            reenter: true,
+          },
+        ],
+        onError: { target: "#nexus", reenter: true },
+      },
+    },
+
+    // updateActionPending: flips the Action row nextAction just found
+    // from "waiting" to "pending" before the delegator starts working it.
+    updateActionPending: {
+      invoke: {
+        src: "updateActionsTableActor",
+        id: "UpdateActionPending",
+        input: ({ context }: { context: NexusContext }): UpdateActionsTableActorInput => ({
+          actionId: context.actionId!,
+          status: "pending",
+        }),
+        onDone: { target: "delegator", reenter: true },
+        onError: { target: "#nexus", reenter: true },
+      },
+    },
+
+
     // delegator: cameraPosition (enrich the pair with tool location via
-    // YOLO + ToF over ROS) -> delegate (decide robot vs human for this
-    // atom) -> whichever single branch applies -> validator once that
-    // branch finishes -> tally the action as done and loop back to the
-    // atomizer for what's next.
+    // YOLO + ToF over ROS) -> delegate (decide robot-only / human-only /
+    // both-simultaneous for this action) -> whichever branch applies ->
+    // validator writes the completed status through the API and loops
+    // back to nextAction for whatever's next.
     delegator: {
       initial: "cameraPosition",
       states: {
@@ -443,71 +528,72 @@ const machine = setup({
           },
         },
 
-        delegate: {
-          invoke: {
-            src: "delegatorActor",
-            id: "DelegatorActor",
-            input: ({ context }: { context: NexusContext }) => ({
-              job: context.job!,
-              actionsResult: context.actionsResult!,
-            }),
-            onDone: [
-              { target: "robotBranch", guard: "isRobotAction", reenter: true },
-              { target: "humanBranch", guard: "isHumanAction", reenter: true },
-            ],
-            onError: { target: "executionError", reenter: true },
-          },
+  delegate: {
+  invoke: {
+    src: "delegatorActor",
+    id: "DelegatorActor",
+    input: ({ context }: { context: NexusContext }) => ({
+      job: context.job!,
+      actionsResult: context.actionsResult!,
+    }),
+    onDone: [
+      {
+        target: "robotBranch",
+        guard: "isRobotAction",
+        actions: assign({ dispatchMode: "single", dispatchRole: "robot" }),
+        reenter: true,
+      },
+      {
+        target: "humanBranch",
+        guard: "isHumanAction",
+        actions: assign({ dispatchMode: "single", dispatchRole: "human" }),
+        reenter: true,
+      },
+      {
+        target: "bothBranch",
+        guard: "isBothActions",
+        actions: assign({ dispatchMode: "both", dispatchRole: undefined }),
+        reenter: true,
+      },
+    ],
+    onError: { target: "executionError", reenter: true },
+  },
+},
+       robotBranch: {
+  initial: "robotActor",
+  states: {
+    robotActor: {
+      invoke: {
+        src: "robotActor",
+        id: "RobotActor",
+        input: ({ context }: { context: NexusContext }) => ({
+          job: context.job!,
+          actionsResult: context.actionsResult,
+        }),
+        onDone: {
+          target: "rosActor",
+          actions: assign({ robotPlan: ({ event }) => event.output.robotPlan }),
+          reenter: true,
         },
-
-        robotBranch: {
-          initial: "robotActor",
-          states: {
-            robotActor: {
-              invoke: {
-                src: "robotActor",
-                id: "RobotActor",
-                input: ({ context }: { context: NexusContext }) => ({
-                  job: context.job!,
-                  actionsResult: context.actionsResult,
-                }),
-                onDone: {
-                  target: "rosActor",
-                  actions: assign({
-                    robotPlan: ({ event }) => event.output.robotPlan,
-                  }),
-                  reenter: true,
-                },
-                onError: {
-                  target: "#nexus.delegator.executionError",
-                  reenter: true,
-                },
-              },
-            },
-
-            rosActor: {
-              invoke: {
-                src: "rosActor",
-                id: "RobotRosActor",
-                input: ({ context }: { context: NexusContext }) => ({
-                  job: context.job!,
-                  source: "robot",
-                  payload: context.robotPlan,
-                }),
-                onDone: {
-                  target: "#nexus.delegator.validator",
-                  actions: assign({
-                    robotRosResult: ({ event }) => event.output.rosResult,
-                  }),
-                  reenter: true,
-                },
-                onError: {
-                  target: "#nexus.delegator.executionError",
-                  reenter: true,
-                },
-              },
-            },
-          },
-        },
+        onError: { target: "#nexus.delegator.executionError", reenter: true },
+      },
+    },
+    rosActor: {
+      invoke: {
+        src: "rosActor",
+        id: "RobotRosActor",
+        input: ({ context }: { context: NexusContext }) => ({
+          job: context.job!,
+          actionId: context.actionId!,
+          source: "robot",
+          payload: context.robotPlan,
+        }),
+        onDone: { target: "#nexus.delegator.validator", reenter: true },
+        onError: { target: "#nexus.delegator.executionError", reenter: true },
+      },
+    },
+  },
+},
 
         humanBranch: {
           initial: "humanActor",
@@ -563,14 +649,12 @@ const machine = setup({
                 id: "HumanRosActor",
                 input: ({ context }: { context: NexusContext }) => ({
                   job: context.job!,
+                  actionId: context.actionId!,
                   source: "human",
                   payload: context.humanResult,
                 }),
                 onDone: {
                   target: "#nexus.delegator.validator",
-                  actions: assign({
-                    humanRosResult: ({ event }) => event.output.rosResult,
-                  }),
                   reenter: true,
                 },
                 onError: {
@@ -582,60 +666,92 @@ const machine = setup({
           },
         },
 
-        validator: {
+        // bothBranch: robot and human work simultaneously — two
+        // independent regions, each with its own execute -> ROS ->
+        // validate loop. Whichever side returns first is validated
+        // immediately and, if it passes, sits in its own "done" final
+        // state waiting on the other; a failing side retries on its
+        // own without blocking the side that already passed. The
+        // parallel state's onDone only fires once BOTH regions reach
+        // "done", which is exactly "validating the one that returns
+        // first, staying pending on the other, until both pass."
+       bothBranch: {
+  type: "parallel",
+  states: {
+    robotRegion: {
+      initial: "robotActor",
+      states: {
+        robotActor: { /* same as robotBranch.robotActor above */ },
+        rosActor: {
           invoke: {
-            src: "validatorActor",
-            id: "ValidatorActor",
+            src: "rosActor",
+            id: "RobotRosActorBoth",
             input: ({ context }: { context: NexusContext }) => ({
               job: context.job!,
-              robotRosResult: context.robotRosResult,
-              humanRosResult: context.humanRosResult,
+              actionId: context.actionId!,
+              source: "robot",
+              payload: context.robotPlan,
             }),
-            onDone: [
-              {
-                target: "updateActionsTable",
-                guard: "isValidatorValid",
-                actions: assign({
-                  validationResult: ({ event }) => event.output,
-                }),
-                reenter: true,
-              },
-              {
-                // rejected — retry. Re-enters "delegate" (no more single
-                // "middleman" to re-run); delegatorActor re-decides
-                // robot vs human against the unchanged pair. No retry
-                // cap yet — add a counter in context if you want one.
-                target: "delegate",
-                guard: "isValidatorInvalid",
-                actions: assign({
-                  validationResult: ({ event }) => event.output,
-                }),
-                reenter: true,
-              },
-            ],
-            onError: { target: "validatorError", reenter: true },
+            onDone: { target: "done", reenter: true },
+            onError: { target: "#nexus.delegator.executionError", reenter: true },
           },
         },
+        done: { type: "final" },
+      },
+    },
+    humanRegion: {
+      initial: "humanActor",
+      states: {
+        humanActor: { /* same as humanBranch.humanActor */ },
+        humanInterpreterActor: { /* unchanged */ },
+        rosActor: {
+          invoke: {
+            src: "rosActor",
+            id: "HumanRosActorBoth",
+            input: ({ context }: { context: NexusContext }) => ({
+              job: context.job!,
+              actionId: context.actionId!,
+              source: "human",
+              payload: context.humanResult,
+            }),
+            onDone: { target: "done", reenter: true },
+            onError: { target: "#nexus.delegator.executionError", reenter: true },
+          },
+        },
+        done: { type: "final" },
+      },
+    },
+  },
+  onDone: { target: "#nexus.delegator.validator", reenter: true },
+},
 
-        updateActionsTable: {
-          invoke: {
-            src: "updateActionsTableActor",
-            id: "UpdateActionsTableActor",
-            input: ({ context }: { context: NexusContext }) => ({
-              job: context.job!,
-              actionsResult: context.actionsResult!,
-              validationResult: context.validationResult!,
-            }),
-            onDone: {
-              target: "#nexus.director.atomize",
-              actions: assign({
-                actionsResult: ({ event }) => event.output.actionsResult,
-              }),
-              reenter: true,
-            },
-            onError: { target: "executionError", reenter: true },
-          },
-        },
+        validator: {
+  invoke: {
+    src: "validatorActor",
+    id: "ValidatorActor",
+    input: ({ context }: { context: NexusContext }) => ({
+      job: context.job!,
+      actionId: context.actionId!,
+      mode: context.dispatchMode!,
+      role: context.dispatchRole,
+    }),
+    onDone: [
+      {
+        target: "#nexus.nextAction",
+        guard: "isValidatorValid",
+        actions: assign({ validationResult: ({ event }) => event.output }),
+        reenter: true,
+      },
+      {
+        target: "delegate",
+        guard: "isValidatorInvalid",
+        actions: assign({ validationResult: ({ event }) => event.output }),
+        reenter: true,
+      },
+    ],
+    onError: { target: "validatorError", reenter: true },
+  },
+},
 
         validatorError: {
           entry: assign({ lastError: ({ event }) => (event as any).error }),
@@ -656,8 +772,30 @@ const machine = setup({
         input: ({ context }: { context: NexusContext }) => ({
           sortGroupId: context.sortGroupId!,
         }),
-        onDone: "orchestrator",
+        onDone: { target: "prepareToolResult", reenter: true },
         onError: { target: "#nexus", reenter: true },
+      },
+    },
+
+    prepareToolResult: {
+      always: {
+        target: "toolAppend",
+        actions: assign({
+          toolResult: ({ context }) => {
+            const groups = context.sortGroups ?? [];
+            const allTaskIds = groups.flatMap((g) => g.taskIds);
+            const allTaskTypes = groups.flatMap((g) => g.taskTypes);
+            const tools = allTaskIds.map((id, idx) => ({
+              id,
+              type: allTaskTypes[idx] ?? "unknown",
+            }));
+            return {
+              label: "done" as const,
+              jobId: context.jobId!,
+              tools,
+            };
+          },
+        }),
       },
     },
 
@@ -750,6 +888,7 @@ const machine = setup({
           target: "advanceBatch",
           actions: assign({
             sortGroupId: ({ event }) => event.output.sortGroupId,
+            sortGroups: ({ event }) => event.output.groups,
           }),
           reenter: true,
         },

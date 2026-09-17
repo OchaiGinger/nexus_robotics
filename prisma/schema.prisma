@@ -9,11 +9,15 @@ datasource db {
 
 model SortGroup {
   id        String   @id @default(uuid())
+  jobId     String
   status    String
   order     Int
   createdAt DateTime @default(now())
 
   tasks Task[]
+
+  @@index([jobId])
+  @@unique([jobId, order])
 }
 
 model Task {
@@ -23,12 +27,12 @@ model Task {
   payload     Json
   status      String
   tools       Json?
+  difficulty  Int?
   sortGroupId String?
   sortGroup   SortGroup? @relation(fields: [sortGroupId], references: [id])
   createdAt   DateTime   @default(now())
   taskList    Json?
 }
-
 model Action {
   id        String   @id @default(uuid())
   jobId     String

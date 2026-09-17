@@ -1,12 +1,13 @@
-// e.g. in a shared types file, actors/types.ts
-export type ActionPair = {
+export type PairAtom = {
+  actor: "robot" | "human";
   atomType: string;
+  values?: unknown;
   toolLocation?: {
     tool: string;
     x: number;
     y: number;
     distanceMeters: number;
   };
-  role?: "robot" | "human"; // set by delegatorActor
-  // add other fields as cameraPositionActor/delegatorActor enrich the pair
 };
+
+export type ActionPair = PairAtom[];

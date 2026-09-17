@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import { runAngleJob } from "@/machine/actors/angleActor";
 import type { AngleJob } from "@/machine/actors/angleActor";
+import { border } from "@/machine/actors/constants";
 
 type DecompItem = number | `c${number}`;
 type Step =
@@ -15,33 +16,40 @@ type Step =
   | { t: "bisect"; l1: string; l2: string; deg: number; type: "angle" | "line"; l: string; m: [number, number]; substeps: Step[]; dir: "cw" | "ccw" }
   | { t: "compass"; deg: number; l: string; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" };
 
-type AngleResult = {
-  angle: number;
-  quadrant: 1 | 2 | 3 | 4;
-  gap: number;
-  from: string;
-  decomp: { full: DecompItem[]; gap: DecompItem[] };
-  steps: Step[];
-};
-
 type ActorOutput = {
   label: "done";
   jobId: string;
   agent: string;
-  result: AngleResult;
+  result: {
+    angle: number;
+    quadrant: 1 | 2 | 3 | 4;
+    gap: number;
+    from: string;
+    decomp: { full: DecompItem[]; gap: DecompItem[] };
+    steps: Step[];
+  };
 };
 
-const SCALE = 2.5;
-const ACTOR_ORIGIN_X = 150;
-const ACTOR_ORIGIN_Y = 110;
-const CANVAS_CENTER_X = 360;
-const CANVAS_CENTER_Y = 250;
+function getOrigin(quadrant: 1 | 2 | 3 | 4): [number, number] {
+  const centerX = (border[0] + border[2]) / 2;
+  const baseY = border[1];
+  const centerY = (border[1] + border[3]) / 2;
+  return quadrant === 1 || quadrant === 2 ? [centerX, baseY] : [centerX, centerY];
+}
+
+const CANVAS_WIDTH = 720;
+const CANVAS_HEIGHT = 500;
+const WORLD_WIDTH = border[2] - border[0];
+const WORLD_HEIGHT = border[3] - border[1];
+const SCALE = Math.min(CANVAS_WIDTH / WORLD_WIDTH, CANVAS_HEIGHT / WORLD_HEIGHT) * 0.9;
+const CANVAS_CENTER_X = CANVAS_WIDTH / 2;
+const CANVAS_CENTER_Y = CANVAS_HEIGHT / 2;
 
 function toScreen(x: number, y: number, dir: "cw" | "ccw" = "cw"): [number, number] {
   const flipY = dir === "ccw" ? -1 : 1;
   return [
-    CANVAS_CENTER_X + (x - ACTOR_ORIGIN_X) * SCALE,
-    CANVAS_CENTER_Y - flipY * (y - ACTOR_ORIGIN_Y) * SCALE,
+    CANVAS_CENTER_X + (x - border[0] - WORLD_WIDTH / 2) * SCALE,
+    CANVAS_CENTER_Y + (flipY * (y - border[1] - WORLD_HEIGHT / 2) * SCALE),
   ];
 }
 
@@ -53,7 +61,7 @@ function formatDecomp(arr: DecompItem[]): string {
   return arr.map(formatDecompItem).join(" + ");
 }
 
-function DraftingCanvas({ steps, currentStep, showAll }: { steps: Step[]; currentStep: number; showAll: boolean }) {
+function DraftingCanvas({ steps, currentStep, showAll, quadrant }: { steps: Step[]; currentStep: number; showAll: boolean; quadrant: 1 | 2 | 3 | 4 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const draw = useCallback(() => {
@@ -96,7 +104,8 @@ function DraftingCanvas({ steps, currentStep, showAll }: { steps: Step[]; curren
       ctx.stroke();
     }
 
-    const [ox, oy] = toScreen(ACTOR_ORIGIN_X, ACTOR_ORIGIN_Y);
+    const origin = getOrigin(quadrant);
+    const [ox, oy] = toScreen(origin[0], origin[1]);
     ctx.strokeStyle = "#94a3b8";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -112,13 +121,13 @@ function DraftingCanvas({ steps, currentStep, showAll }: { steps: Step[]; curren
     ctx.font = "9px sans-serif";
     ctx.textAlign = "center";
     for (let x = 0; x < canvas.width; x += 50) {
-      const wx = Math.round((x - CANVAS_CENTER_X) / SCALE + ACTOR_ORIGIN_X);
-      if (wx !== ACTOR_ORIGIN_X) ctx.fillText(`${wx}`, x, oy + 12);
+      const wx = Math.round((x - CANVAS_CENTER_X) / SCALE + border[0] + WORLD_WIDTH / 2);
+      if (Math.abs(wx - origin[0]) > 1) ctx.fillText(`${wx}`, x, oy + 12);
     }
     ctx.textAlign = "right";
     for (let y = 0; y < canvas.height; y += 50) {
-      const wy = Math.round(ACTOR_ORIGIN_Y + (y - CANVAS_CENTER_Y) / SCALE);
-      if (wy !== ACTOR_ORIGIN_Y) ctx.fillText(`${wy}`, ox - 6, y + 3);
+      const wy = Math.round(border[1] + WORLD_HEIGHT / 2 - (y - CANVAS_CENTER_Y) / SCALE);
+      if (Math.abs(wy - origin[1]) > 1) ctx.fillText(`${wy}`, ox - 6, y + 3);
     }
 
     ctx.fillStyle = "#ef4444";
@@ -131,8 +140,8 @@ function DraftingCanvas({ steps, currentStep, showAll }: { steps: Step[]; curren
     ctx.fillText("O", ox + 8, oy + 4);
 
     const pointRegistry = new Map<string, [number, number]>();
-    pointRegistry.set("O", [ACTOR_ORIGIN_X, ACTOR_ORIGIN_Y]);
-    pointRegistry.set("start", [ACTOR_ORIGIN_X, ACTOR_ORIGIN_Y]);
+    pointRegistry.set("O", origin);
+    pointRegistry.set("start", origin);
 
     const visibleSteps = showAll ? steps : steps.slice(0, currentStep + 1);
 
@@ -292,7 +301,7 @@ function DraftingCanvas({ steps, currentStep, showAll }: { steps: Step[]; curren
         ctx.stroke();
       }
     }
-  }, [steps, currentStep, showAll]);
+  }, [steps, currentStep, showAll, quadrant]);
 
   useEffect(() => {
     draw();
@@ -591,6 +600,17 @@ export default function TestPage() {
               ))}
             </div>
           </div>
+          <div className="border-t border-slate-100 p-2">
+            <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Legend</h3>
+            <div className="space-y-1 text-[9px]">
+              <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-slate-800"></span> Baseline</div>
+              <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-slate-500" style={{ borderTop: "1px dashed" }}></span> Ray</div>
+              <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-blue-600"></span> Arc</div>
+              <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-red-500" style={{ borderTop: "1px dashed" }}></span> Compass</div>
+              <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span> Bisect point</div>
+              <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full bg-red-500"></span> Mark point</div>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-1 flex-col overflow-auto p-4">
@@ -646,7 +666,7 @@ export default function TestPage() {
           </div>
 
           <div className="flex justify-center">
-            <DraftingCanvas steps={flatSteps} currentStep={currentStep} showAll={showAll} />
+            <DraftingCanvas steps={flatSteps} currentStep={currentStep} showAll={showAll} quadrant={result.quadrant} />
           </div>
 
           {currentStep >= 0 && currentStep < flatTotal && (
@@ -658,31 +678,29 @@ export default function TestPage() {
           )}
         </div>
 
-        <div className="flex w-56 flex-col border-l border-slate-200 bg-white">
-          <div className="border-b border-slate-100 p-2">
-            <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Raw JSON</h3>
-            <textarea
-              value={rawJson}
-              onChange={(e) => setRawJson(e.target.value)}
-              className="h-48 w-full rounded border border-slate-200 bg-slate-50 p-2 font-mono text-[8px] text-slate-600"
-            />
+        <div className="flex w-80 flex-col border-l border-slate-200 bg-white">
+          <div className="border-b border-slate-100 p-2 flex items-center justify-between">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Raw JSON</h3>
             <button
-              onClick={handleJsonSubmit}
-              className="mt-1.5 w-full rounded bg-slate-200 px-2 py-1 text-[9px] font-medium text-slate-600 hover:bg-slate-300"
+              onClick={() => navigator.clipboard.writeText(rawJson)}
+              className="rounded px-1.5 py-0.5 text-[8px] font-medium text-slate-500 hover:bg-slate-100"
+              title="Copy JSON"
             >
-              Reload
+              Copy
             </button>
           </div>
           <div className="flex-1 overflow-auto p-2">
-            <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Legend</h3>
-            <div className="space-y-1 text-[9px]">
-              <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-slate-800"></span> Baseline</div>
-              <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-slate-500" style={{ borderTop: "1px dashed" }}></span> Ray</div>
-              <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-blue-600"></span> Arc</div>
-              <div className="flex items-center gap-2"><span className="h-0.5 w-4 bg-red-500" style={{ borderTop: "1px dashed" }}></span> Compass</div>
-              <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span> Bisect point</div>
-              <div className="flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full bg-red-500"></span> Mark point</div>
-            </div>
+            <pre className="rounded-lg bg-slate-900 p-3 text-[10px] leading-relaxed text-slate-100 overflow-auto max-h-[calc(100%-4rem)] font-mono">
+              {rawJson}
+            </pre>
+          </div>
+          <div className="border-t border-slate-100 p-2">
+            <button
+              onClick={handleJsonSubmit}
+              className="w-full rounded bg-slate-200 px-2 py-1 text-[9px] font-medium text-slate-600 hover:bg-slate-300"
+            >
+              Reload from Editor
+            </button>
           </div>
         </div>
       </div>

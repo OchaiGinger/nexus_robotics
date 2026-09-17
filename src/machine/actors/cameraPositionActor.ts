@@ -1,15 +1,16 @@
 // src/actors/cameraPositionActor.ts
 import { fromPromise } from "xstate";
+import type { ActionPair } from "./types";
 
 type CameraPositionActorInput = {
   job: { id: string };
-  actionsResult: { label: "done"; jobId: string; pair: any };
+  actionsResult: { label: "done"; jobId: string; pair: ActionPair };
 };
 
 type CameraPositionActorOutput = {
   label: "done";
   jobId: string;
-  actionsResult: { label: "done"; jobId: string; pair: any };
+  actionsResult: { label: "done"; jobId: string; pair: ActionPair };
 };
 
 export const cameraPositionActor = fromPromise<

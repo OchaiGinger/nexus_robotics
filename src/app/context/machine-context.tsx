@@ -3,12 +3,15 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
   type ReactNode,
 } from "react";
 import { useMachine } from "@xstate/react";
-import type { ActorRefFrom, SnapshotFrom } from "xstate";
+import type {
+  ActorRefFrom,
+  InspectionEvent,
+  SnapshotFrom,
+} from "xstate";
 import { machine } from "@/machine/nexus_machine";
 
 type MachineActor = ActorRefFrom<typeof machine>;
@@ -19,10 +22,54 @@ export type NodeStatus = "active" | "done" | "never";
 export type NodeLogEntry = {
   status: NodeStatus;
   context: Ctx | null;
+  output?: unknown;
   ts: number | null;
 };
 
 export type NodeLog = Record<string, NodeLogEntry>;
+
+const ACTOR_OUTPUT_NODES: Record<string, string> = {
+  Ochestrator: "orchestrator",
+  QueueActor: "cue",
+  ToolSmithActor: "tool",
+  ValidateJobActor: "validateJobActor",
+  ToolAppendActor: "toolAppend",
+  AtomizerActor: "director.atomize",
+  CreateActionsTableActor: "director.createActionsTable",
+  NextActionActor: "nextAction",
+  UpdateActionPending: "updateActionPending",
+  UpdateActionCompleted: "updateActionCompleted",
+  CameraPositionActor: "delegator.cameraPosition",
+  DelegatorActor: "delegator.delegate",
+  RobotActor: "delegator.robotBranch.robotActor",
+  RobotRosActor: "delegator.robotBranch.rosActor",
+  HumanActor: "delegator.humanBranch.humanActor",
+  HumanInterpreterActor:
+    "delegator.humanBranch.humanInterpreterActor",
+  HumanRosActor: "delegator.humanBranch.rosActor",
+  RobotActorBoth:
+    "delegator.bothBranch.robotRegion.robotActor",
+  RobotRosActorBoth:
+    "delegator.bothBranch.robotRegion.rosActor",
+  ValidateRobotOnly:
+    "delegator.bothBranch.robotRegion.validate",
+  HumanActorBoth:
+    "delegator.bothBranch.humanRegion.humanActor",
+  HumanInterpreterActorBoth:
+    "delegator.bothBranch.humanRegion.humanInterpreterActor",
+  HumanRosActorBoth:
+    "delegator.bothBranch.humanRegion.rosActor",
+  ValidateHumanOnly:
+    "delegator.bothBranch.humanRegion.validate",
+  ValidatorActor: "delegator.validator",
+  UpdatePendWaitingActor: "advanceBatch",
+  ProjectionActor: "projectionAgent",
+  AngleActor: "angleAgent",
+  GearActor: "gearAgent",
+  PolygonActor: "polygonAgent",
+  createWaitingPendingActor: "agentResult",
+  SortGroupActor: "sortGroup",
+};
 
 type MachineContextValue = {
   state: SnapshotFrom<typeof machine>;
@@ -62,37 +109,76 @@ function flattenStateValue(value: unknown, prefix: string[] = []): string[] {
 }
 
 export function MachineProvider({ children }: { children: ReactNode }) {
-  const [state, send] = useMachine(machine);
   const [nodeLog, setNodeLog] = useState<NodeLog>({});
+  const [state, send] = useMachine(machine, {
+    inspect: (inspectionEvent: InspectionEvent) => {
+      if (inspectionEvent.type === "@xstate.snapshot") {
+        const snapshot = inspectionEvent.snapshot;
+        if (!("context" in snapshot)) return;
 
-  useEffect(() => {
-    const activeLeaves = flattenStateValue(state.value);
-    const activePaths = expandToPrefixes(activeLeaves);
-
-    setNodeLog((prev) => {
-      const next: NodeLog = { ...prev };
-
-      // anything active right now: stamp it with the current context
-      for (const path of activePaths) {
-        next[path] = {
-          status: "active",
-          context: state.context,
-          ts: Date.now(),
+        const machineSnapshot = snapshot as {
+          value: unknown;
+          context: unknown;
         };
+        const activePaths = expandToPrefixes(
+          flattenStateValue(machineSnapshot.value),
+        );
+        const context = machineSnapshot.context as Ctx;
+
+        setNodeLog((prev) => {
+          const next: NodeLog = { ...prev };
+
+          for (const path of activePaths) {
+            next[path] = {
+              ...next[path],
+              status: "active",
+              context,
+              ts: Date.now(),
+            };
+          }
+
+          for (const [path, entry] of Object.entries(prev)) {
+            if (entry.status === "active" && !activePaths.has(path)) {
+              next[path] = { ...entry, status: "done" };
+            }
+          }
+
+          return next;
+        });
+        return;
       }
 
-      // anything that WAS active but isn't anymore just finished —
-      // mark it "done" but keep the context it had at the time it was
-      // last active, so you can inspect what it received/produced
-      for (const [path, entry] of Object.entries(prev)) {
-        if (entry.status === "active" && !activePaths.has(path)) {
-          next[path] = { ...entry, status: "done" };
-        }
+      if (
+        inspectionEvent.type !== "@xstate.event" ||
+        !inspectionEvent.event.type.startsWith("xstate.done.actor.")
+      ) {
+        return;
       }
 
-      return next;
-    });
-  }, [state]);
+      const actorId = inspectionEvent.event.type.slice(
+        "xstate.done.actor.".length,
+      );
+      const nodeId = ACTOR_OUTPUT_NODES[actorId];
+      if (!nodeId) return;
+
+      const output = (
+        inspectionEvent.event as { output?: unknown }
+      ).output;
+
+      setNodeLog((prev) => {
+        const previous = prev[nodeId];
+        return {
+          ...prev,
+          [nodeId]: {
+            status: previous?.status === "active" ? "active" : "done",
+            context: previous?.context ?? null,
+            output,
+            ts: Date.now(),
+          },
+        };
+      });
+    },
+  });
 
   return (
     <MachineContext.Provider value={{ state, send, nodeLog }}>

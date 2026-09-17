@@ -11,18 +11,32 @@ export async function POST(req: NextRequest) {
     );
 
   try {
-    await prisma.$transaction([
-      prisma.sortGroup.update({
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.sortGroup.update({
         where: { id: sortGroupId },
         data: { status: "pending" },
-      }),
-      prisma.task.updateMany({
+      });
+
+      const tasks = await tx.task.updateMany({
         where: { sortGroupId },
         data: { status: "pending" },
-      }),
-    ]);
+      });
 
-    return NextResponse.json({ label: "done", sortGroupId });
+      const taskIds = await tx.task.findMany({
+        where: { sortGroupId },
+        select: { id: true },
+        orderBy: { createdAt: "asc" },
+      });
+
+      return { count: tasks.count, taskIds: taskIds.map((t) => t.id) };
+    });
+
+    return NextResponse.json({
+      label: "done",
+      sortGroupId,
+      taskCount: result.count,
+      taskIds: result.taskIds,
+    });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },

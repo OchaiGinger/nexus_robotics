@@ -2,7 +2,13 @@
 import { fromPromise } from "xstate";
 
 type UpdatePendWaitingInput = { sortGroupId: string };
-type UpdatePendWaitingOutput = { label: "done"; sortGroupId: string };
+type UpdatePendWaitingOutput = {
+  label: "done";
+  sortGroupId: string;
+  jobId: string;
+  taskCount?: number;
+  taskIds?: string[];
+};
 
 export const updatePendWaitingActor = fromPromise<
   UpdatePendWaitingOutput,

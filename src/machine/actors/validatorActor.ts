@@ -1,17 +1,17 @@
+// src/actors/validatorActor.ts
 import { fromPromise } from "xstate";
 
 type ValidatorActorInput = {
-  job: {
-    id: string;
-    payload: unknown;
-  };
-  robotRosResult: unknown;
-  humanRosResult: unknown;
+  job: { id: string; payload: unknown };
+  actionId: string;
+  mode: "single" | "both";
+  role?: "robot" | "human"; // required when mode === "single"
 };
 
 type ValidatorActorOutput = {
   label: "done";
   jobId: string;
+  actionId: string;
   robotCorrect: boolean;
   humanCorrect: boolean;
   valid: boolean;
@@ -21,39 +21,19 @@ export const validatorActor = fromPromise<
   ValidatorActorOutput,
   ValidatorActorInput
 >(async ({ input }) => {
-  const { job, robotRosResult, humanRosResult } = input;
-
-  if (!job) {
-    throw new Error("validatorActor requires a job");
+  if (!input.job) throw new Error("validatorActor requires a job");
+  if (!input.actionId) throw new Error("validatorActor requires an actionId");
+  if (input.mode === "single" && !input.role) {
+    throw new Error("validatorActor requires a role when mode is 'single'");
   }
 
-  // both parallel regions (robot, human) have already hit their own
-  // final state by the time this runs — check that each one actually
-  // did the right thing, and that they agree with each other
-  const robotCorrect = await checkRobotResult(job, robotRosResult);
-  const humanCorrect = await checkHumanResult(job, humanRosResult);
+  const res = await fetch("/api/actors/validate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 
-  return {
-    label: "done",
-    jobId: job.id,
-    robotCorrect,
-    humanCorrect,
-    valid: robotCorrect && humanCorrect,
-  };
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "validatorActor request failed");
+  return data as ValidatorActorOutput;
 });
-
-// replace with real robot-result validation logic
-async function checkRobotResult(
-  job: ValidatorActorInput["job"],
-  robotRosResult: unknown,
-): Promise<boolean> {
-  return true;
-}
-
-// replace with real human-result validation logic
-async function checkHumanResult(
-  job: ValidatorActorInput["job"],
-  humanRosResult: unknown,
-): Promise<boolean> {
-  return true;
-}

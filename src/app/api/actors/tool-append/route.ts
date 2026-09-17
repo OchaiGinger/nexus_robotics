@@ -2,17 +2,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// CONFIRMED (from your instructions): verticalLine, horizontalLine, circle.
-// ASSUMED: angleLine and bisector — not specified, inferred as reasonable
-// construction tools. Correct these if wrong.
-const TOOLS_BY_TASK_TYPE: Record<string, string[]> = {
-  baseline: ["ruler", "pencil"],
-  horizontalLine: ["ruler", "pencil"],
-  verticalLine: ["set square", "ruler", "pencil"],
-  circle: ["compass", "ruler", "set square"],
-  angleLine: ["protractor", "ruler", "pencil"], // ASSUMED
-  bisector: ["compass", "ruler", "pencil"], // ASSUMED
+type TaskRecord = { id: string; type: string; payload: unknown };
+
+const TOOLS_BY_TYPE: Record<string, string[]> = {
+  baseline: ["pencil", "ruler"],       // horizontal DrawInstruction
+  arc: ["pencil", "compass"],          // real compass-drawn arc
+  compass: ["pencil", "protractor"],   // measure DrawInstruction (renamed to "compass" by mapInstructionsToSteps)
+  mark: ["pencil"],
+  // add new task types here as they appear
 };
+
+function isVerticalRay(payload: unknown): boolean {
+  const p = payload as { a?: [number, number]; b?: [number, number] } | null | undefined;
+  const a = p?.a;
+  const b = p?.b;
+  return Array.isArray(a) && Array.isArray(b) && a[0] === b[0];
+}
+
+function getToolsForTask(task: TaskRecord): string[] {
+  if (task.type === "ray") {
+    return isVerticalRay(task.payload)
+      ? ["pencil", "ruler", "45setsquare"]
+      : ["pencil", "ruler"];
+  }
+  return TOOLS_BY_TYPE[task.type] ?? [];
+}
 
 export async function POST(req: NextRequest) {
   const toolResult = await req.json();
@@ -25,16 +39,40 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const requestedIds: string[] = toolResult.tools
+      .map((t: { id?: string }) => t?.id)
+      .filter((id: unknown): id is string => typeof id === "string");
+
+    if (requestedIds.length === 0) {
+      return NextResponse.json(
+        { error: "toolResult.tools contained no valid task ids" },
+        { status: 400 },
+      );
+    }
+
+    const pendingTasks = await prisma.task.findMany({
+      where: { id: { in: requestedIds }, jobId: toolResult.jobId, status: "pending" },
+      select: { id: true, type: true, payload: true },
+    });
+
+    const pendingIds = new Set(pendingTasks.map((t) => t.id));
+    const skipped = requestedIds.filter((id) => !pendingIds.has(id));
+
     await Promise.all(
-      toolResult.tools.map((task: { id: string; type: string }) =>
+      pendingTasks.map((task) =>
         prisma.task.update({
           where: { id: task.id },
-          data: { tools: TOOLS_BY_TASK_TYPE[task.type] ?? [] },
+          data: { tools: getToolsForTask(task) },
         }),
       ),
     );
 
-    return NextResponse.json({ label: "done", jobId: toolResult.jobId });
+    return NextResponse.json({
+      label: "done",
+      jobId: toolResult.jobId,
+      updatedCount: pendingTasks.length,
+      skipped,
+    });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },

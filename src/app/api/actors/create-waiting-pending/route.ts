@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { randomUUID } from "crypto";
 
 type AgentLabel =
   | "projectionActor"
@@ -7,60 +8,57 @@ type AgentLabel =
   | "gearActor"
   | "polygonActor";
 
-type AgentStep = {
-  type: string;
-  difficulty: number;
-  payload: unknown;
+type Step = {
+  t: string;
+  [key: string]: unknown;
 };
 
 type PendingWaitingInput = {
   label: "done";
   jobId: string;
   agent: AgentLabel;
-  result: AgentStep[];
+  result: {
+    angle?: number;
+    quadrant?: number;
+    gap?: number;
+    from?: string;
+    decomp?: { full: unknown[]; gap: unknown[] };
+    steps: Step[];
+  };
 };
 
 export async function POST(req: NextRequest) {
   const input: PendingWaitingInput = await req.json();
 
-  if (!input?.jobId || !Array.isArray(input.result)) {
+  if (!input?.jobId || !input.result?.steps) {
     return NextResponse.json(
-      { error: "pending-waiting requires jobId and an array result" },
+      { error: "pending-waiting requires jobId and result.steps" },
       { status: 400 },
     );
   }
 
   try {
-    const taskIds = await prisma.$transaction(async (tx) => {
-      const ids: string[] = [];
+    // Generate ids up front so we can return them — createMany doesn't
+    // return the created rows.
+    const rows = input.result.steps.map((step) => ({
+      id: randomUUID(),
+      jobId: input.jobId,
+      type: step.t,
+      payload: step as any,
+      status: "waiting",
+      sortGroupId: null,
+    }));
 
-      for (const step of input.result) {
-        const task = await tx.task.create({
-          data: {
-            jobId: input.jobId,
-            type: step.type,
-            // difficulty lives inside payload for now — no dedicated
-            // column on Task yet
-            payload: {
-              ...(step.payload as object),
-              difficulty: step.difficulty,
-            } as any,
-            status: "waiting",
-            sortGroupId: null,
-          },
-        });
-        ids.push(task.id);
-      }
-
-      return ids;
-    });
+    await prisma.task.createMany({ data: rows });
 
     return NextResponse.json({
       label: "done",
       jobId: input.jobId,
-      taskIds,
+      taskCount: rows.length,
+      taskIds: rows.map((r) => r.id),
     });
   } catch (err) {
+    console.error("[create-waiting-pending] failed:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },
       { status: 500 },

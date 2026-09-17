@@ -408,13 +408,11 @@ export class Draws {
    * but semantically distinct — this is the "measure with a compass" step.
    * axes = [startLetter, endLetter]. Returns the measured distance (mm).
    */
-  drawMeasure(axes: Line): number {
-    const [start, end] = resolveLine(axes);
-    const distance = distanceBetween(start, end);
+ drawMeasure(axes: Line): void {
+  const [start, end] = resolveLine(axes);
 
-    this.pushInstruction({ task: "measure", start, end, value: distance, label: axes.join("") });
-    return distance;
-  }
+  this.pushInstruction({ task: "measure", start, end, value: 0, label: axes.join("") });
+}
 
   /**
    * Logs marking a single already-known point (e.g. marking O).
@@ -821,43 +819,22 @@ export class Construct {
     return endLetter;
   }
 
-  private construct60(params: ConstructParams): Line {
-    const { baseArcRadius, bisectRadius, axes, direction, pinpoint } = params;
+private construct60(params: ConstructParams): Line {
+  const { baseArcRadius, bisectRadius, axes, direction, pinpoint } = params;
 
-    // 1. Log the baseline (e.g. O–A) that the base arc will be swung from.
-    this.draws.drawHorizontal(["B", "A"]);
+  this.draws.drawHorizontal(["B", "A"]);
+  const verticalEndpoint = currentQuadrant === 3 || currentQuadrant === 4 ? "Vdown" : "Vup";
+  this.draws.drawVertical([pinpoint, verticalEndpoint]);
 
-    // 2. Figure the base arc's start (already known: axes[1]) and end
-    //    (swept fresh, via sweepArcEndpoint using ANGLE_SWEEP[60]), then
-    //    log it through the existing, unchanged drawArc — which still
-    //    just takes two known points, same as every other caller relies on.
-    const startLetter = axes[1];
-    const endLetter = this.sweepArcEndpoint(
-      startLetter,
-      pinpoint,
-      baseArcRadius,
-      currentQuadrant,
-      ANGLE_SWEEP[60]
-    );
-    this.draws.drawArc([startLetter, endLetter], baseArcRadius, pinpoint);
+  const startLetter = axes[1];
+  const endLetter = this.sweepArcEndpoint(startLetter, pinpoint, baseArcRadius, currentQuadrant, ANGLE_SWEEP[60]);
+  this.draws.drawArc([startLetter, endLetter], baseArcRadius, pinpoint);
 
-    // 3. bisectArc finds the true cut point (circle-circle intersection
-    //    between the base arc and a circle centered at axes[0]) and
-    //    marks its two flanking tick points, logging an arc between them.
-    const { cutLetter, ticks } = this.special.bisectArc(
-      baseArcRadius,
-      bisectRadius,
-      axes,
-      direction,
-      pinpoint
-    );
+  const { cutLetter, ticks } = this.special.bisectArc(baseArcRadius, bisectRadius, axes, direction, pinpoint);
+  this.draws.drawRay([pinpoint, cutLetter]);
 
-    // 4. Ray from the vertex through the TRUE cut point (not a tick mark)
-    //    completes the angle.
-    this.draws.drawRay([pinpoint, cutLetter]);
-
-    return ticks;
-  }
+  return ticks;
+}
 
   private construct90(params: ConstructParams): Line {
     const { pinpoint } = params;
@@ -933,8 +910,9 @@ export class Construct {
     const { baseArcRadius, bisectRadius, axes, direction, pinpoint } = params;
 
     // 1. Log the baseline that the base arc will be swung from.
-    this.draws.drawHorizontal(["B", "A"]);
-
+   this.draws.drawHorizontal(["B", "A"]);
+const verticalEndpoint = currentQuadrant === 3 || currentQuadrant === 4 ? "Vdown" : "Vup";
+this.draws.drawVertical([pinpoint, verticalEndpoint]);
     // 2. Base arc: start = axes[1] (known), end swept via ANGLE_SWEEP[120].
     const startLetter = axes[1];
     const endLetter = this.sweepArcEndpoint(

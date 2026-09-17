@@ -4,9 +4,19 @@ type SortGroupActorInput = {
   jobId: string;
 };
 
+type SortGroup = {
+  id: string;
+  order: number;
+  difficulty: number;
+  taskIds: string[];
+  taskTypes: string[];
+};
+
 type SortGroupActorOutput = {
   label: "done";
   sortGroupId: string;
+  taskCount?: number;
+  groups?: SortGroup[];
 };
 
 export const sortGroupActor = fromPromise<

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { STATE_GRAPH, EDGES, flattenActors } from "./state-graph-data";
 import type { NodeLog, NodeLogEntry } from "@/app/context/machine-context";
+import type { GraphEdge } from "./state-graph-data";
 
 import { useRouter } from "next/navigation";
 
@@ -30,10 +31,15 @@ function buildLayout(): { nodes: FlowNode[]; width: number; height: number } {
     [
       "director.atomize",
       "director.createActionsTable",
+      "nextAction",
+      "updateActionPending",
+    ],
+    [
       "delegator.cameraPosition",
       "delegator.delegate",
       "delegator.validator",
-      "delegator.updateActionsTable",
+      "delegator.validatorError",
+      "delegator.executionError",
     ],
     [
       "tool",
@@ -78,185 +84,349 @@ function getStatus(s: "active" | "done" | "never") {
   return { bg: "#ffffff", border: "#d1d5db", text: "#6b7280", glow: "none" };
 }
 
-function PayloadPanel({ entry, nodeId, onClose }: { entry: NodeLogEntry; nodeId: string; onClose: () => void }) {
-  const [tab, setTab] = useState<"context" | "raw">("context");
+function ActorOutputModal({
+  entry,
+  nodeId,
+  actor,
+  onClose,
+}: {
+  entry: NodeLogEntry;
+  nodeId: string;
+  actor?: string;
+  onClose: () => void;
+}) {
   const router = useRouter();
-  const ctx = entry.context as Record<string, unknown> | null;
-  const input = ctx?.job ?? ctx?.actionsResult ?? ctx?.toolResult;
-  // Agent output is wrapped as { label, jobId, agent, result } in the
-  // machine context. The angle-specific fields live in `result`.
-  const agentResult = ctx?.agentResult as { result?: unknown } | undefined;
-  const output = (agentResult?.result ?? ctx?.validationResult ?? ctx?.actionsResult) as Record<string, unknown> | undefined;
-  const lastError = ctx?.lastError;
-  const decomp = output?.decomp as { full: (number | string)[]; gap: (number | string)[] } | undefined;
-  const quadrant = output?.quadrant as number | undefined;
-  const gap = output?.gap as number | undefined;
-  const from = output?.from as string | undefined;
-  const steps = output?.steps as Record<string, unknown>[] | undefined;
-
-  // Context payloads are intentionally `unknown` because they come from
-  // different actors. Never render one directly in JSX; convert it to a
-  // concrete string at the UI boundary.
-  const displayText = (value: unknown): string => {
-    if (typeof value === "string" || typeof value === "number") return String(value);
-    if (value == null) return "";
-    return JSON.stringify(value) ?? String(value);
-  };
+  const hasOutput = entry.output !== undefined;
 
   const handleTest = () => {
-    const testData = output || ctx || {};
-    const encoded = encodeURIComponent(JSON.stringify(testData, null, 2));
+    if (!hasOutput) return;
+    const encoded = encodeURIComponent(JSON.stringify(entry.output));
     router.push(`/test?data=${encoded}`);
   };
 
-  const formatDecompItem = (item: number | string): string =>
-    typeof item === "string" ? `compass ${item.slice(1)}°` : `${item}°`;
-
-  const isCompass = (item: number | string): boolean => typeof item === "string";
+  const formatOutput = (value: unknown): string => {
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
+  };
 
   return (
-    <div className="flex h-full flex-col border-l border-slate-200 bg-white">
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900">{nodeId}</h3>
-          <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${entry.status === "active" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}>
-            {entry.status === "active" ? "Running" : "Completed"}
-          </span>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="actor-output-title"
+      style={{ animation: "fadeIn 150ms ease-out" }}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        style={{ animation: "growIn 180ms ease-out" }}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+          <div className="min-w-0">
+            <h3
+              id="actor-output-title"
+              className="truncate text-sm font-semibold text-slate-900"
+            >
+              {nodeId}
+            </h3>
+            {actor && (
+              <p className="mt-0.5 truncate text-[11px] font-medium text-indigo-600">
+                {actor}
+              </p>
+            )}
+            <span
+              className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                entry.status === "active"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {entry.status === "active" ? "Running" : "Completed"}
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              onClick={handleTest}
+              disabled={!hasOutput}
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:bg-slate-200"
+            >
+              Test
+            </button>
+            <button
+              onClick={onClose}
+              aria-label="Close actor output"
+              className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M12 4L4 12M4 4l8 8"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleTest}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
-          >
-            Test
-          </button>
-          <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          </button>
+
+        <div className="max-h-[calc(85vh-88px)] overflow-auto p-5">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Output
+          </div>
+          {hasOutput ? (
+            <pre className="overflow-auto rounded-lg bg-slate-900 p-4 text-[11px] leading-relaxed text-slate-200">
+              {formatOutput(entry.output)}
+            </pre>
+          ) : (
+            <p className="rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400">
+              No output logged yet for this actor.
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-slate-100 px-4">
-        {(["context", "raw"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-2 text-xs font-medium capitalize transition-colors ${tab === t ? "border-b-2 border-indigo-500 text-indigo-600" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <style jsx global>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes growIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+      `}</style>
+    </div>
+  );
+}
 
-      <div className="flex-1 overflow-auto p-4">
-        {tab === "context" && (
-          <div className="space-y-4">
-            {decomp?.full && decomp.full.length > 0 && (
-              <div>
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Full Decomposition</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {decomp.full.map((part, i) => (
-                    <span
-                      key={i}
-                      className={`rounded-md px-2 py-1 text-[10px] font-medium ${
-                        isCompass(part) ? "bg-amber-100 text-amber-700" : "bg-indigo-100 text-indigo-700"
-                      }`}
-                    >
-                      {formatDecompItem(part)}
-                    </span>
-                  ))}
-                </div>
-                <div className="mt-2 flex gap-3 text-[10px] text-slate-500">
-                  <span>{decomp.full.reduce<number>((sum, p) => sum + (typeof p === "number" ? p : parseFloat(p.slice(1))), 0)}° total</span>
-                  {quadrant && <span>Q{quadrant}</span>}
-                </div>
-              </div>
-            )}
-            {decomp?.gap && decomp.gap.length > 0 && (
-              <div>
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Gap Decomposition ({gap}° from {from})</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {decomp.gap.map((part, i) => (
-                    <span
-                      key={i}
-                      className={`rounded-md px-2 py-1 text-[10px] font-medium ${
-                        isCompass(part) ? "bg-amber-100 text-amber-700" : "bg-purple-100 text-purple-700"
-                      }`}
-                    >
-                      {formatDecompItem(part)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {steps && steps.length > 0 && (
-              <div>
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Steps ({steps.length})</div>
-                <div className="space-y-1">
-                  {steps.map((step, i) => (
-                    <div key={i} className="flex items-center gap-2 rounded bg-slate-50 px-2 py-1 text-[9px]">
-                      <span className="font-medium text-slate-500">{i + 1}</span>
-                      <span className={`rounded px-1 py-0.5 font-medium ${
-                        step.t === "baseline" ? "bg-blue-100 text-blue-700"
-                          : step.t === "arc" ? "bg-purple-100 text-purple-700"
-                          : step.t === "mark" ? "bg-green-100 text-green-700"
-                          : step.t === "bisect" ? "bg-orange-100 text-orange-700"
-                          : step.t === "compass" ? "bg-red-100 text-red-700"
-                          : "bg-slate-100 text-slate-700"
-                      }`}>
-                        {displayText(step.t)}
-                      </span>
-                      <span className="text-slate-600">{displayText(step.l)}</span>
-                      {step.pin != null && <span className="text-slate-400">@{displayText(step.pin)}</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {Boolean(input) && (
-              <div>
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Input</div>
-                <pre className="overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-emerald-300">
-                  {displayText(input)}
-                </pre>
-              </div>
-            )}
-            {output && (
-              <div>
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Output</div>
-                <pre className="overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-blue-300">
-                  {displayText(output)}
-                </pre>
-              </div>
-            )}
-            {Boolean(lastError) && (
-              <div>
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-red-500">Last Error</div>
-                <pre className="overflow-auto rounded-lg bg-red-950 p-3 text-[11px] leading-relaxed text-red-100">
-                  {lastError instanceof Error ? lastError.message : displayText(lastError)}
-                </pre>
-              </div>
-            )}
-            {!input && !output && (
-              <pre className="overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-300">
-                {displayText(ctx)}
-              </pre>
+// ─────────────────────────────────────────────
+// Edge flip-card + modal
+// ─────────────────────────────────────────────
+
+const KIND_STYLES: Record<string, { bg: string; border: string; text: string }> = {
+  default: { bg: "#ffffff", border: "#cbd5e1", text: "#475569" },
+  loop: { bg: "#fffbeb", border: "#f59e0b", text: "#92400e" },
+  retry: { bg: "#fffbeb", border: "#f59e0b", text: "#92400e" },
+  error: { bg: "#fef2f2", border: "#ef4444", text: "#991b1b" },
+};
+
+// Turns a context object into readable "Label: value" lines, one level
+// deep — good enough for a human skim; the modal's raw-JSON section
+// covers anything nested that needs closer inspection.
+function humanizeContext(ctx: Record<string, unknown> | null | undefined): { label: string; value: string }[] {
+  if (!ctx) return [];
+  const skip = new Set(["lastError"]);
+  const lines: { label: string; value: string }[] = [];
+
+  for (const [key, val] of Object.entries(ctx)) {
+    if (val === undefined || skip.has(key)) continue;
+    const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase());
+
+    let value: string;
+    if (val === null) value = "—";
+    else if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") value = String(val);
+    else if (Array.isArray(val)) value = `${val.length} item${val.length === 1 ? "" : "s"}`;
+    else value = "(object — see raw JSON)";
+
+    lines.push({ label, value });
+  }
+  return lines;
+}
+
+function EdgeModal({
+  edge,
+  fromEntry,
+  toEntry,
+  onClose,
+}: {
+  edge: GraphEdge;
+  fromEntry?: NodeLogEntry;
+  toEntry?: NodeLogEntry;
+  onClose: () => void;
+}) {
+  const style = KIND_STYLES[edge.kind ?? "default"];
+  const fromLines = humanizeContext(fromEntry?.context as Record<string, unknown> | null);
+  const toLines = humanizeContext(toEntry?.context as Record<string, unknown> | null);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6"
+      onClick={onClose}
+      style={{ animation: "fadeIn 150ms ease-out" }}
+    >
+      <div
+        className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-2xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        style={{ animation: "growIn 180ms ease-out" }}
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <span>{edge.from}</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <span>{edge.to}</span>
+            </div>
+            {edge.label && (
+              <span
+                className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
+                style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}
+              >
+                {edge.label}
+              </span>
             )}
           </div>
-        )}
-        {tab === "raw" && (
-          <pre className="overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-300">
-            {displayText(entry.context)}
-          </pre>
-        )}
+          <button onClick={onClose} className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+
+        <div className="space-y-5 p-5">
+          <div>
+            <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Before — {edge.from}
+            </div>
+            {fromLines.length > 0 ? (
+              <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1.5 text-xs">
+                {fromLines.map((l) => (
+                  <div key={l.label} className="contents">
+                    <dt className="font-medium text-slate-500">{l.label}</dt>
+                    <dd className="text-slate-800">{l.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="text-xs text-slate-400">No data logged yet for this node.</p>
+            )}
+          </div>
+
+          <div>
+            <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              After — {edge.to}
+            </div>
+            {toLines.length > 0 ? (
+              <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1.5 text-xs">
+                {toLines.map((l) => (
+                  <div key={l.label} className="contents">
+                    <dt className="font-medium text-slate-500">{l.label}</dt>
+                    <dd className="text-slate-800">{l.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="text-xs text-slate-400">Not reached yet.</p>
+            )}
+          </div>
+
+          <details className="rounded-lg bg-slate-50 p-3">
+            <summary className="cursor-pointer text-xs font-medium text-slate-500">Raw JSON</summary>
+            <pre className="mt-2 overflow-auto rounded bg-slate-900 p-3 text-[10px] leading-relaxed text-slate-200">
+              {JSON.stringify({ from: fromEntry?.context ?? null, to: toEntry?.context ?? null }, null, 2)}
+            </pre>
+          </details>
+        </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes growIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+      `}</style>
     </div>
+  );
+}
+
+function EdgeCard({
+  edge,
+  x,
+  y,
+  flipped,
+  reached,
+  onClick,
+}: {
+  edge: GraphEdge;
+  x: number;
+  y: number;
+  flipped: boolean;
+  reached: boolean;
+  onClick: () => void;
+}) {
+  const style = KIND_STYLES[edge.kind ?? "default"];
+  const w = Math.max(48, (edge.label?.length ?? 4) * 5.6 + 16);
+  const h = 20;
+
+  return (
+    <foreignObject x={x - w / 2} y={y - h / 2} width={w} height={h} style={{ overflow: "visible" }}>
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          if (reached) onClick();
+        }}
+        style={{
+          width: w,
+          height: h,
+          perspective: "300px",
+          cursor: reached ? "pointer" : "default",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "relative",
+            transformStyle: "preserve-3d",
+            transition: "transform 220ms ease",
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}
+        >
+          {/* front */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backfaceVisibility: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 6,
+              background: style.bg,
+              border: `1px solid ${style.border}`,
+              fontSize: 7,
+              fontWeight: 500,
+              color: style.text,
+              boxShadow: reached ? "0 1px 2px rgba(0,0,0,0.08)" : "none",
+              opacity: reached ? 1 : 0.5,
+            }}
+          >
+            {edge.label}
+          </div>
+          {/* back */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 6,
+              background: style.border,
+              color: "#fff",
+              fontSize: 7,
+              fontWeight: 600,
+            }}
+          >
+            View →
+          </div>
+        </div>
+      </div>
+    </foreignObject>
   );
 }
 
 export function FlowGraph({ nodeLog }: { nodeLog: NodeLog }) {
   const { nodes, width, height } = useMemo(() => buildLayout(), []);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [flippedEdgeId, setFlippedEdgeId] = useState<string | null>(null);
+  const [modalEdgeId, setModalEdgeId] = useState<string | null>(null);
 
   const nodeMap = useMemo(() => {
     const m = new Map<string, FlowNode>();
@@ -265,6 +435,20 @@ export function FlowGraph({ nodeLog }: { nodeLog: NodeLog }) {
   }, [nodes]);
 
   const selectedEntry = selectedNode ? nodeLog[selectedNode] : undefined;
+  const modalEdge = modalEdgeId ? EDGES.find((e) => e.id === modalEdgeId) : undefined;
+
+  const handleEdgeClick = (edgeId: string) => {
+    if (flippedEdgeId === edgeId) {
+      setModalEdgeId(edgeId);
+    } else {
+      setFlippedEdgeId(edgeId);
+    }
+  };
+
+  const closeModal = () => {
+    setModalEdgeId(null);
+    setFlippedEdgeId(null);
+  };
 
   const renderEdges = () =>
     EDGES.map((edge) => {
@@ -285,28 +469,24 @@ export function FlowGraph({ nodeLog }: { nodeLog: NodeLog }) {
           ? `M ${x1} ${y1} L ${x2} ${y2}`
           : `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
 
-      const color =
-        edge.kind === "error" ? "#ef4444" : edge.kind === "loop" || edge.kind === "retry" ? "#f59e0b" : "#cbd5e1";
+      const color = KIND_STYLES[edge.kind ?? "default"].border;
+      // "reached" = the from-node has actually logged something, i.e.
+      // this transition has plausibly fired at least once — cards for
+      // edges that never ran stay dim and non-interactive.
+      const reached = Boolean(nodeLog[edge.from]);
 
       return (
         <g key={edge.id}>
-          <path d={path} fill="none" stroke={color} strokeWidth={1.5} markerEnd="url(#arrow)" />
+          <path d={path} fill="none" stroke={reached ? color : "#e2e8f0"} strokeWidth={1.5} markerEnd="url(#arrow)" />
           {edge.label && (
-            <g>
-              <rect
-                x={mx - edge.label.length * 2.8}
-                y={my - 7}
-                width={edge.label.length * 5.6 + 8}
-                height={14}
-                rx={4}
-                fill="#fff"
-                stroke="#e2e8f0"
-                strokeWidth={0.5}
-              />
-              <text x={mx + 4} y={my + 3} textAnchor="middle" fontSize={7} fill="#64748b" fontWeight={500}>
-                {edge.label}
-              </text>
-            </g>
+            <EdgeCard
+              edge={edge}
+              x={mx}
+              y={my}
+              flipped={flippedEdgeId === edge.id}
+              reached={reached}
+              onClick={() => handleEdgeClick(edge.id)}
+            />
           )}
         </g>
       );
@@ -322,6 +502,17 @@ export function FlowGraph({ nodeLog }: { nodeLog: NodeLog }) {
         <g
           key={node.id}
           onClick={() => entry && setSelectedNode(node.id)}
+          onKeyDown={(event) => {
+            if (
+              entry &&
+              (event.key === "Enter" || event.key === " ")
+            ) {
+              event.preventDefault();
+              setSelectedNode(node.id);
+            }
+          }}
+          role={entry ? "button" : undefined}
+          tabIndex={entry ? 0 : -1}
           style={{ cursor: entry ? "pointer" : "default" }}
         >
           <rect
@@ -392,9 +583,21 @@ export function FlowGraph({ nodeLog }: { nodeLog: NodeLog }) {
       </div>
 
       {selectedNode && selectedEntry && (
-        <div className="w-[380px] flex-shrink-0">
-          <PayloadPanel entry={selectedEntry} nodeId={selectedNode} onClose={() => setSelectedNode(null)} />
-        </div>
+        <ActorOutputModal
+          entry={selectedEntry}
+          nodeId={selectedNode}
+          actor={nodeMap.get(selectedNode)?.actor}
+          onClose={() => setSelectedNode(null)}
+        />
+      )}
+
+      {modalEdge && (
+        <EdgeModal
+          edge={modalEdge}
+          fromEntry={nodeLog[modalEdge.from]}
+          toEntry={nodeLog[modalEdge.to]}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

@@ -1,14 +1,10 @@
 // src/app/api/actors/camera-position/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import * as ROSLIB from "roslib";
-const RosLib: any = ROSLIB;
-// roslib's type declarations don't reliably match its runtime shape —
-// bypassing strict typing here rather than fighting mismatched .d.ts
-// files property by property.
+import { Topic } from "roslib";
+import type { ActionPair } from "@/machine/actors/types";
+import { connectRos } from "@/lib/rosConnect";
+import { ROS_TOPICS } from "@/lib/rosTopics";
 
-const REQUEST_TOPIC = "/vision/detect_request";
-const RESPONSE_TOPIC = "/vision/detect_response";
-const ROSBRIDGE_URL = process.env.ROSBRIDGE_URL ?? "ws://localhost:9090";
 const DETECTION_TIMEOUT_MS = 10_000;
 
 function toolNameForAtom(atomType: string): string {
@@ -17,43 +13,70 @@ function toolNameForAtom(atomType: string): string {
   return match[1].charAt(0).toLowerCase() + match[1].slice(1);
 }
 
+type DetectionResponse = {
+  requestId?: unknown;
+  x?: unknown;
+  y?: unknown;
+  distanceMeters?: unknown;
+};
+
 function detectToolPosition(
-  ros: any,
+  ros: import("roslib").Ros,
   tool: string,
 ): Promise<{ x: number; y: number; distanceMeters: number }> {
   return new Promise((resolve, reject) => {
     const requestId = crypto.randomUUID();
-
-    const requestTopic = new ROSLIB.Topic({
+    const requestTopic = new Topic({
       ros,
-      name: REQUEST_TOPIC,
+      name: ROS_TOPICS.visionDetectRequest,
       messageType: "std_msgs/String",
     });
-
-    const responseTopic = new ROSLIB.Topic({
+    const responseTopic = new Topic({
       ros,
-      name: RESPONSE_TOPIC,
+      name: ROS_TOPICS.visionDetectResponse,
       messageType: "std_msgs/String",
     });
+    let settled = false;
+
+    const fail = (error: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      responseTopic.unsubscribe();
+      reject(error);
+    };
 
     const timeout = setTimeout(() => {
-      responseTopic.unsubscribe();
-      reject(
+      fail(
         new Error(
           `Timed out waiting for detection of "${tool}" (requestId ${requestId})`,
         ),
       );
     }, DETECTION_TIMEOUT_MS);
 
-    responseTopic.subscribe((message: any) => {
-      let payload: any;
+    responseTopic.subscribe((message: unknown) => {
+      const data =
+        message && typeof message === "object" && "data" in message
+          ? (message as { data?: unknown }).data
+          : undefined;
+      let payload: DetectionResponse;
       try {
-        payload = JSON.parse(message.data);
+        payload = JSON.parse(typeof data === "string" ? data : "") as DetectionResponse;
       } catch {
         return;
       }
-      if (payload.requestId !== requestId) return;
 
+      if (payload.requestId !== requestId) return;
+      if (
+        typeof payload.x !== "number" ||
+        typeof payload.y !== "number" ||
+        typeof payload.distanceMeters !== "number"
+      ) {
+        fail(new Error(`Invalid detection response for "${tool}"`));
+        return;
+      }
+
+      settled = true;
       clearTimeout(timeout);
       responseTopic.unsubscribe();
       resolve({
@@ -69,27 +92,32 @@ function detectToolPosition(
 
 export async function POST(req: NextRequest) {
   const { job, actionsResult } = await req.json();
-  const pair = actionsResult?.pair;
+  const pair = actionsResult?.pair as ActionPair | undefined;
 
-  if (!job?.id || !pair?.atomType) {
+  if (!job?.id || !Array.isArray(pair) || pair.length === 0) {
     return NextResponse.json(
-      { error: "job.id and actionsResult.pair.atomType are required" },
+      { error: "job.id and a non-empty actionsResult.pair are required" },
       { status: 400 },
     );
   }
 
-  const ros = new ROSLIB.Ros({ url: ROSBRIDGE_URL });
-
+  let ros;
   try {
-    await new Promise<void>((resolve, reject) => {
-      ros.on("connection", () => resolve());
-      ros.on("error", (err: unknown) => reject(err));
-    });
+    ros = await connectRos();
 
-    const tool = toolNameForAtom(pair.atomType);
+    const targetIndex =
+      pair.findIndex((atom) => atom.actor === "robot") >= 0
+        ? pair.findIndex((atom) => atom.actor === "robot")
+        : 0;
+    const target = pair[targetIndex];
+    const tool = toolNameForAtom(target.atomType);
     const position = await detectToolPosition(ros, tool);
 
-    const enrichedPair = { ...pair, toolLocation: { tool, ...position } };
+    const enrichedPair = pair.map((atom, index) =>
+      index === targetIndex
+        ? { ...atom, toolLocation: { tool, ...position } }
+        : atom,
+    );
 
     return NextResponse.json({
       label: "done",
@@ -97,11 +125,12 @@ export async function POST(req: NextRequest) {
       actionsResult: { label: "done", jobId: job.id, pair: enrichedPair },
     });
   } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 },
+      { error: message, rosBridge: true },
+      { status: 503 },
     );
   } finally {
-    ros.close();
+    ros?.close();
   }
 }
