@@ -1,6 +1,18 @@
 import { z } from "zod";
 
-export const projectionAgentPayloadSchema = z.object({}).passthrough();
+export const projectionAgentPayloadSchema = z.object({
+  label: z.string().default(""),
+  imageDataUrl: z
+    .string()
+    .optional()
+    .refine(
+      (value) => !value || value.length <= 5_000_000,
+      "Image must be smaller than 5 MB",
+    ),
+  imageMimeType: z.string().optional(),
+  trellisModelUrl: z.string().optional(),
+  trellisRenderUrl: z.string().optional(),
+}).passthrough();
 
 export const angleAgentPayloadSchema = z.object({
   label: z.string().min(1, "Give this angle a name").default(""),
@@ -88,5 +100,6 @@ export const schemaByType: Record<JobType, z.ZodTypeAny> = {
 export type AngleAgentPayload = z.infer<typeof angleAgentPayloadSchema>;
 export type GearAgentPayload = z.infer<typeof gearAgentPayloadSchema>;
 export type PolygonAgentPayload = z.infer<typeof polygonAgentPayloadSchema>;
+export type ProjectionAgentPayload = z.infer<typeof projectionAgentPayloadSchema>;
 export type TriangleType = z.infer<typeof triangleTypeSchema>;
 export type PolygonType = z.infer<typeof polygonTypeSchema>;

@@ -20,7 +20,7 @@ import { createActionsTableActor } from "./actors/createActionsTableActor";
 import { nextActionActor } from "./actors/nextActionActor";
 
 // delegator subagents
-import { cameraPositionActor } from "./actors/cameraPositionActor";
+
 import { delegatorActor } from "./actors/delegatorActor";
 import { robotActor } from "./actors/robotActor";
 import { humanActor } from "./actors/humanActor";
@@ -142,7 +142,7 @@ const machine = setup({
     createActionsTableActor,
     nextActionActor,
 
-    cameraPositionActor,
+
     delegatorActor,
     robotActor,
     humanActor,
@@ -491,109 +491,88 @@ const machine = setup({
       invoke: {
         src: "updateActionsTableActor",
         id: "UpdateActionPending",
-        input: ({ context }: { context: NexusContext }): UpdateActionsTableActorInput => ({
+        input: ({ context }: { context: NexusContext }) => ({
           actionId: context.actionId!,
           status: "pending",
         }),
-        onDone: { target: "delegator", reenter: true },
+        onDone: { target: "#nexus.delegator.delegate", reenter: true },
         onError: { target: "#nexus", reenter: true },
       },
     },
-
-
     // delegator: cameraPosition (enrich the pair with tool location via
     // YOLO + ToF over ROS) -> delegate (decide robot-only / human-only /
     // both-simultaneous for this action) -> whichever branch applies ->
     // validator writes the completed status through the API and loops
     // back to nextAction for whatever's next.
     delegator: {
-      initial: "cameraPosition",
+      initial: "delegate",
       states: {
-        cameraPosition: {
+        delegate: {
           invoke: {
-            src: "cameraPositionActor",
-            id: "CameraPositionActor",
+            src: "delegatorActor",
+            id: "DelegatorActor",
             input: ({ context }: { context: NexusContext }) => ({
               job: context.job!,
               actionsResult: context.actionsResult!,
             }),
-            onDone: {
-              target: "delegate",
-              actions: assign({
-                actionsResult: ({ event }) => event.output.actionsResult,
-              }),
-              reenter: true,
-            },
+            onDone: [
+              {
+                target: "robotBranch",
+                guard: "isRobotAction",
+                actions: assign({ dispatchMode: "single", dispatchRole: "robot" }),
+                reenter: true,
+              },
+              {
+                target: "humanBranch",
+                guard: "isHumanAction",
+                actions: assign({ dispatchMode: "single", dispatchRole: "human" }),
+                reenter: true,
+              },
+              {
+                target: "bothBranch",
+                guard: "isBothActions",
+                actions: assign({ dispatchMode: "both", dispatchRole: undefined }),
+                reenter: true,
+              },
+            ],
             onError: { target: "executionError", reenter: true },
           },
         },
-
-  delegate: {
-  invoke: {
-    src: "delegatorActor",
-    id: "DelegatorActor",
-    input: ({ context }: { context: NexusContext }) => ({
-      job: context.job!,
-      actionsResult: context.actionsResult!,
-    }),
-    onDone: [
-      {
-        target: "robotBranch",
-        guard: "isRobotAction",
-        actions: assign({ dispatchMode: "single", dispatchRole: "robot" }),
-        reenter: true,
-      },
-      {
-        target: "humanBranch",
-        guard: "isHumanAction",
-        actions: assign({ dispatchMode: "single", dispatchRole: "human" }),
-        reenter: true,
-      },
-      {
-        target: "bothBranch",
-        guard: "isBothActions",
-        actions: assign({ dispatchMode: "both", dispatchRole: undefined }),
-        reenter: true,
-      },
-    ],
-    onError: { target: "executionError", reenter: true },
-  },
-},
-       robotBranch: {
-  initial: "robotActor",
-  states: {
-    robotActor: {
-      invoke: {
-        src: "robotActor",
-        id: "RobotActor",
-        input: ({ context }: { context: NexusContext }) => ({
-          job: context.job!,
-          actionsResult: context.actionsResult,
-        }),
-        onDone: {
-          target: "rosActor",
-          actions: assign({ robotPlan: ({ event }) => event.output.robotPlan }),
-          reenter: true,
+        robotBranch: {
+          initial: "robotActor",
+          states: {
+            robotActor: {
+              invoke: {
+                src: "robotActor",
+                id: "RobotActor",
+                input: ({ context }: { context: NexusContext }) => ({
+                  job: context.job!,
+                  actionsResult: context.actionsResult,
+                }),
+                onDone: {
+                  target: "rosActor",
+                  actions: assign({ robotPlan: ({ event }) => event.output.robotPlan }),
+                  reenter: true,
+                },
+                onError: { target: "#nexus.delegator.executionError", reenter: true },
+              },
+            },
+            rosActor: {
+              invoke: {
+                src: "rosActor",
+                id: "RobotRosActor",
+                input: ({ context }: { context: NexusContext }) => ({
+                  job: context.job!,
+                  actionId: context.actionId!,
+                  source: "robot",
+                  payload: context.robotPlan,
+                }),
+                onDone: { target: "#nexus.delegator.validator", reenter: true },
+                onError: { target: "#nexus.delegator.executionError", reenter: true },
+              },
+            },
+          },
         },
-        onError: { target: "#nexus.delegator.executionError", reenter: true },
-      },
-    },
-    rosActor: {
-      invoke: {
-        src: "rosActor",
-        id: "RobotRosActor",
-        input: ({ context }: { context: NexusContext }) => ({
-          job: context.job!,
-          actionId: context.actionId!,
-          source: "robot",
-          payload: context.robotPlan,
-        }),
-        onDone: { target: "#nexus.delegator.validator", reenter: true },
-        onError: { target: "#nexus.delegator.executionError", reenter: true },
-      },
-    },
-  },
-},
 
         humanBranch: {
           initial: "humanActor",
@@ -675,91 +654,172 @@ const machine = setup({
         // parallel state's onDone only fires once BOTH regions reach
         // "done", which is exactly "validating the one that returns
         // first, staying pending on the other, until both pass."
-       bothBranch: {
-  type: "parallel",
-  states: {
-    robotRegion: {
-      initial: "robotActor",
-      states: {
-        robotActor: { /* same as robotBranch.robotActor above */ },
-        rosActor: {
-          invoke: {
-            src: "rosActor",
-            id: "RobotRosActorBoth",
-            input: ({ context }: { context: NexusContext }) => ({
-              job: context.job!,
-              actionId: context.actionId!,
-              source: "robot",
-              payload: context.robotPlan,
-            }),
-            onDone: { target: "done", reenter: true },
-            onError: { target: "#nexus.delegator.executionError", reenter: true },
+        //
+        // NOTE: these regions previously had placeholder comments
+        // ("/* same as robotBranch.robotActor above */") instead of
+        // real invoke configs. An empty state node has nothing to
+        // invoke and nothing to transition on, so the machine parked
+        // silently inside bothBranch forever and validator was never
+        // reached. Filled in below with real invokes (distinct ids so
+        // they don't collide with the single-branch versions).
+        bothBranch: {
+          type: "parallel",
+          states: {
+            robotRegion: {
+              initial: "robotActor",
+              states: {
+                robotActor: {
+                  invoke: {
+                    src: "robotActor",
+                    id: "RobotActorBoth",
+                    input: ({ context }: { context: NexusContext }) => ({
+                      job: context.job!,
+                      actionsResult: context.actionsResult,
+                    }),
+                    onDone: {
+                      target: "rosActor",
+                      actions: assign({
+                        robotPlan: ({ event }) => event.output.robotPlan,
+                      }),
+                      reenter: true,
+                    },
+                    onError: {
+                      target: "#nexus.delegator.executionError",
+                      reenter: true,
+                    },
+                  },
+                },
+                rosActor: {
+                  invoke: {
+                    src: "rosActor",
+                    id: "RobotRosActorBoth",
+                    input: ({ context }: { context: NexusContext }) => ({
+                      job: context.job!,
+                      actionId: context.actionId!,
+                      source: "robot",
+                      payload: context.robotPlan,
+                    }),
+                    onDone: { target: "done", reenter: true },
+                    onError: {
+                      target: "#nexus.delegator.executionError",
+                      reenter: true,
+                    },
+                  },
+                },
+                done: { type: "final" },
+              },
+            },
+            humanRegion: {
+              initial: "humanActor",
+              states: {
+                humanActor: {
+                  invoke: {
+                    src: "humanActor",
+                    id: "HumanActorBoth",
+                    input: ({ context }: { context: NexusContext }) => ({
+                      job: context.job!,
+                      actionsResult: context.actionsResult,
+                    }),
+                    onDone: {
+                      target: "humanInterpreterActor",
+                      actions: assign({
+                        humanInstructions: ({ event }) =>
+                          event.output.humanInstructions,
+                      }),
+                      reenter: true,
+                    },
+                    onError: {
+                      target: "#nexus.delegator.executionError",
+                      reenter: true,
+                    },
+                  },
+                },
+                humanInterpreterActor: {
+                  invoke: {
+                    src: "humanInterpreterActor",
+                    id: "HumanInterpreterActorBoth",
+                    input: ({ context }: { context: NexusContext }) => ({
+                      job: context.job!,
+                      humanInstructions: context.humanInstructions,
+                    }),
+                    onDone: {
+                      target: "rosActor",
+                      actions: assign({
+                        humanResult: ({ event }) => event.output.humanResult,
+                      }),
+                      reenter: true,
+                    },
+                    onError: {
+                      target: "#nexus.delegator.executionError",
+                      reenter: true,
+                    },
+                  },
+                },
+                rosActor: {
+                  invoke: {
+                    src: "rosActor",
+                    id: "HumanRosActorBoth",
+                    input: ({ context }: { context: NexusContext }) => ({
+                      job: context.job!,
+                      actionId: context.actionId!,
+                      source: "human",
+                      payload: context.humanResult,
+                    }),
+                    onDone: { target: "done", reenter: true },
+                    onError: {
+                      target: "#nexus.delegator.executionError",
+                      reenter: true,
+                    },
+                  },
+                },
+                done: { type: "final" },
+              },
+            },
           },
+          onDone: { target: "#nexus.delegator.validator", reenter: true },
         },
-        done: { type: "final" },
-      },
-    },
-    humanRegion: {
-      initial: "humanActor",
-      states: {
-        humanActor: { /* same as humanBranch.humanActor */ },
-        humanInterpreterActor: { /* unchanged */ },
-        rosActor: {
-          invoke: {
-            src: "rosActor",
-            id: "HumanRosActorBoth",
-            input: ({ context }: { context: NexusContext }) => ({
-              job: context.job!,
-              actionId: context.actionId!,
-              source: "human",
-              payload: context.humanResult,
-            }),
-            onDone: { target: "done", reenter: true },
-            onError: { target: "#nexus.delegator.executionError", reenter: true },
-          },
-        },
-        done: { type: "final" },
-      },
-    },
-  },
-  onDone: { target: "#nexus.delegator.validator", reenter: true },
-},
 
         validator: {
-  invoke: {
-    src: "validatorActor",
-    id: "ValidatorActor",
-    input: ({ context }: { context: NexusContext }) => ({
-      job: context.job!,
-      actionId: context.actionId!,
-      mode: context.dispatchMode!,
-      role: context.dispatchRole,
-    }),
-    onDone: [
-      {
-        target: "#nexus.nextAction",
-        guard: "isValidatorValid",
-        actions: assign({ validationResult: ({ event }) => event.output }),
-        reenter: true,
-      },
-      {
-        target: "delegate",
-        guard: "isValidatorInvalid",
-        actions: assign({ validationResult: ({ event }) => event.output }),
-        reenter: true,
-      },
-    ],
-    onError: { target: "validatorError", reenter: true },
-  },
-},
+          invoke: {
+            src: "validatorActor",
+            id: "ValidatorActor",
+            input: ({ context }: { context: NexusContext }) => ({
+              job: context.job!,
+              actionId: context.actionId!,
+              mode: context.dispatchMode!,
+              role: context.dispatchRole,
+            }),
+            onDone: [
+              {
+                target: "#nexus.nextAction",
+                guard: "isValidatorValid",
+                actions: assign({ validationResult: ({ event }) => event.output }),
+                reenter: true,
+              },
+              {
+                target: "delegate",
+                guard: "isValidatorInvalid",
+                actions: assign({ validationResult: ({ event }) => event.output }),
+                reenter: true,
+              },
+            ],
+            onError: { target: "validatorError", reenter: true },
+          },
+        },
 
         validatorError: {
-          entry: assign({ lastError: ({ event }) => (event as any).error }),
+          entry: [
+            ({ event }: any) => console.error("[validatorError]", event.error),
+            assign({ lastError: ({ event }) => (event as any).error }),
+          ],
           always: { target: "#nexus.orchestrator", reenter: true },
         },
 
         executionError: {
-          entry: assign({ lastError: ({ event }) => (event as any).error }),
+          entry: [
+            ({ event }: any) => console.error("[executionError]", event.error),
+            assign({ lastError: ({ event }) => (event as any).error }),
+          ],
           always: { target: "#nexus.orchestrator", reenter: true },
         },
       },

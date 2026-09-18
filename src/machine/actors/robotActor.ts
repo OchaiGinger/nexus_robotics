@@ -17,11 +17,11 @@ function atomForRole(pair: ActionPair, role: "robot" | "human"): PairAtom | unde
 }
 
 type RobotPlan =
-  | { action: string; target: { x: number; y: number; z: number } } // pick — vision-located
-  | { action: string; target: { x: number; y: number } } // mark — construction-space point
-  | { action: "draw"; from: { x: number; y: number }; to: { x: number; y: number } } // line
+  | { action: "pick"; tool: string } // robot does its own continuous YOLO-guided approach
+  | { action: string; target: { x: number; y: number } }
+  | { action: "draw"; from: { x: number; y: number }; to: { x: number; y: number } }
   | { action: "drawArc"; center: { x: number; y: number }; radius: number; angle: number }
-  | { action: string }; // no-target actions (e.g. collect)
+  | { action: string };
 
 type RobotActorOutput = {
   label: "done";
@@ -29,10 +29,6 @@ type RobotActorOutput = {
   robotPlan: RobotPlan;
 };
 
-// CONFIRMED: pick* atoms require vision-detected toolLocation (you
-// described this directly). Everything else below is ASSUMED based on
-// the values shapes atomizerActor's Slot definitions produce for
-// baseline/arc — not yet confirmed against real construction data.
 const PICK_ATOMS = new Set(["pickPencil", "pickRuler", "pickCompass"]);
 
 const ATOM_ACTION: Record<string, string> = {
@@ -59,27 +55,13 @@ export const robotActor = fromPromise<RobotActorOutput, RobotActorInput>(
     const action = ATOM_ACTION[pair.atomType] ?? pair.atomType;
 
     if (PICK_ATOMS.has(pair.atomType)) {
-      if (!pair.toolLocation) {
-        throw new Error(
-          `robotActor: no toolLocation on pair for atomType "${pair.atomType}" — cameraPositionActor must run before this atom is dispatched`,
-        );
-      }
-      return {
-        label: "done",
-        jobId: job.id,
-        robotPlan: {
-          action,
-          target: {
-            x: pair.toolLocation.x,
-            y: pair.toolLocation.y,
-            z: pair.toolLocation.distanceMeters,
-          },
-        },
-      };
+      // No vision pre-resolution — the robot's own ROS-side node does
+      // continuous YOLO-guided servoing until it acquires the tool.
+      // Only the tool name is sent.
+      const tool = pair.atomType.replace(/^pick/, "").toLowerCase();
+      return { label: "done", jobId: job.id, robotPlan: { action: "pick", tool } };
     }
 
-    // Construction-space atoms already carry their real coordinates
-    // from atomizerActor's Slot.values extractor — no vision needed.
     const values = pair.values as
       | { point?: [number, number] }
       | { from?: [number, number]; to?: [number, number] }
@@ -87,7 +69,6 @@ export const robotActor = fromPromise<RobotActorOutput, RobotActorInput>(
       | undefined;
 
     if (!values) {
-      // e.g. "collect" — no target coordinates required
       return { label: "done", jobId: job.id, robotPlan: { action } };
     }
 

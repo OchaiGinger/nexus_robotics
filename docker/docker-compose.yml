@@ -1,0 +1,28 @@
+services:
+  rosbridge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "9090:9090"
+    command: ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+    # network_mode: host removed. On Docker Desktop for Windows/Mac,
+    # host networking binds to the hidden Linux VM's network namespace,
+    # NOT to the Windows host's actual localhost — so `ws://localhost:9090`
+    # from a Windows-side `npm run dev` process could never reach it,
+    # even though the container itself reports listening fine.
+    # Bridge mode (the default) + the `ports:` mapping above is what
+    # actually forwards 9090 to Windows localhost.
+
+  nexus_nodes:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - rosbridge
+    command: ros2 run nexus_bridge dispatch_node
+    # Left on default (bridge) networking too, so it shares a
+    # Compose-managed network with rosbridge and can still reach it
+    # by service name (rosbridge) for the ROS graph / DDS side.
+    # If dispatch_node and rosbridge stop discovering each other after
+    # this change, see the DDS discovery note below.

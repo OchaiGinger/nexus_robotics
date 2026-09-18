@@ -38,18 +38,56 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Generate ids up front so we can return them — createMany doesn't
-    // return the created rows.
-    const rows = input.result.steps.map((step) => ({
-      id: randomUUID(),
-      jobId: input.jobId,
-      type: step.t,
-      payload: step as any,
-      status: "waiting",
-      sortGroupId: null,
-    }));
+    const requestedCounts = new Map<string, number>();
+    for (const step of input.result.steps) {
+      requestedCounts.set(step.t, (requestedCounts.get(step.t) ?? 0) + 1);
+    }
 
-    await prisma.task.createMany({ data: rows });
+    const existing = await prisma.task.findMany({
+      where: {
+        jobId: input.jobId,
+        type: { in: [...requestedCounts.keys()] },
+      },
+      select: { id: true, type: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const existingCounts = new Map<string, number>();
+    for (const task of existing) {
+      existingCounts.set(task.type, (existingCounts.get(task.type) ?? 0) + 1);
+    }
+
+    const missingRows = input.result.steps.filter((step) => {
+      const currentCount = existingCounts.get(step.t) ?? 0;
+      const requestedCount = requestedCounts.get(step.t) ?? 0;
+      if (currentCount < requestedCount) {
+        existingCounts.set(step.t, currentCount + 1);
+        return true;
+      }
+      return false;
+    });
+
+    if (missingRows.length > 0) {
+      await prisma.task.createMany({
+        data: missingRows.map((step) => ({
+          id: randomUUID(),
+          jobId: input.jobId,
+          type: step.t,
+          payload: step as any,
+          status: "waiting",
+          sortGroupId: null,
+        })),
+      });
+    }
+
+    const rows = await prisma.task.findMany({
+      where: {
+        jobId: input.jobId,
+        type: { in: [...requestedCounts.keys()] },
+      },
+      select: { id: true },
+      orderBy: { createdAt: "asc" },
+    });
 
     return NextResponse.json({
       label: "done",

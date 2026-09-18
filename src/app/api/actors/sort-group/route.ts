@@ -27,6 +27,35 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const existingGroups = await prisma.sortGroup.findMany({
+      where: { jobId },
+      orderBy: { order: "asc" },
+    });
+
+    if (existingGroups.length > 0) {
+      const groupedTasks = await prisma.task.findMany({
+        where: { jobId, sortGroupId: { not: null } },
+        select: { id: true, type: true, sortGroupId: true },
+        orderBy: { createdAt: "asc" },
+      });
+      const groups = existingGroups.map((group) => {
+        const tasks = groupedTasks.filter((task) => task.sortGroupId === group.id);
+        return {
+          id: group.id,
+          order: group.order,
+          difficulty: group.difficulty,
+          taskIds: tasks.map((task) => task.id),
+          taskTypes: tasks.map((task) => task.type),
+        };
+      });
+      return NextResponse.json({
+        label: "done",
+        sortGroupId: groups[0]?.id ?? null,
+        taskCount: groups.reduce((count, group) => count + group.taskIds.length, 0),
+        groups,
+      });
+    }
+
     const ungroupedTasks = await prisma.task.findMany({
       where: { jobId, status: "waiting", sortGroupId: null },
       orderBy: { createdAt: "asc" },

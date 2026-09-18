@@ -1,45 +1,33 @@
+// src/machine/actors/humanInterpreterActor.ts
 import { fromPromise } from "xstate";
 
 type HumanInterpreterActorInput = {
-  job: {
-    id: string;
-    payload: unknown;
-  };
-  humanInstructions: unknown;
+  job: { id: string; payload: unknown };
+  humanInstructions: { text: string; atomType: string };
 };
 
 type HumanInterpreterActorOutput = {
   label: "done";
   jobId: string;
-  humanResult: unknown;
+  humanResult: { text: string; atomType: string };
 };
 
 export const humanInterpreterActor = fromPromise<
   HumanInterpreterActorOutput,
   HumanInterpreterActorInput
 >(async ({ input }) => {
-  const { job, humanInstructions } = input;
-
-  if (!job) {
-    throw new Error("humanInterpreterActor requires a job");
+  if (!input.job) throw new Error("humanInterpreterActor requires a job");
+  if (!input.humanInstructions?.text) {
+    throw new Error("humanInterpreterActor requires humanInstructions.text");
   }
 
-  // watch/listen for the human's response to the instructions (speech,
-  // gesture, button press, etc.) and interpret it into a structured
-  // result the rest of the pipeline can hand off to ROS
-  const humanResult = await interpretHumanResponse(job, humanInstructions);
+  const res = await fetch("/api/actors/human-interpret", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 
-  return {
-    label: "done",
-    jobId: job.id,
-    humanResult,
-  };
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "humanInterpreterActor request failed");
+  return data as HumanInterpreterActorOutput;
 });
-
-// replace with real interpretation logic (speech/gesture/vision model, etc.)
-async function interpretHumanResponse(
-  job: HumanInterpreterActorInput["job"],
-  humanInstructions: unknown,
-): Promise<unknown> {
-  return {};
-}

@@ -1,17 +1,38 @@
 import { fromPromise } from "xstate";
 
+type ProjectionJob = {
+  id: string;
+  payload: unknown;
+};
+
 type ProjectionActorInput = {
-  job: {
-    id: string;
-    payload: unknown;
-  };
+  job: ProjectionJob;
+};
+
+type ProjectionArtifact = {
+  kind: "local-preview" | "provider";
+  vertices?: number[][];
+  faces?: number[][];
+  modelUrl?: string;
+  renderUrl?: string;
+  provider?: string;
 };
 
 type ProjectionActorOutput = {
   label: "done";
   jobId: string;
   agent: "projectionActor";
-  result: unknown;
+  result: {
+    artifact: ProjectionArtifact;
+    steps: Array<Record<string, unknown>>;
+  };
+};
+
+type ProjectionApiResponse = {
+  jobId?: string;
+  artifact?: ProjectionArtifact;
+  steps?: Array<Record<string, unknown>>;
+  error?: string;
 };
 
 export const projectionActor = fromPromise<
@@ -22,28 +43,27 @@ export const projectionActor = fromPromise<
     throw new Error("projectionActor requires a job");
   }
 
-  // fetch the json file this job needs
-  const json = await fetchJobJson(input.job.id);
+  const response = await fetch("/api/projection/reconstruct", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jobId: input.job.id,
+      payload: input.job.payload,
+    }),
+  });
 
-  // run projection-specific processing / ai call against the json
-  const result = await runProjection(json);
+  const data = (await response.json().catch(() => ({}))) as ProjectionApiResponse;
+  if (!response.ok || !data.artifact || !Array.isArray(data.steps)) {
+    throw new Error(data.error ?? `Projection request failed (${response.status})`);
+  }
 
   return {
     label: "done",
     jobId: input.job.id,
     agent: "projectionActor",
-    result,
+    result: {
+      artifact: data.artifact,
+      steps: data.steps,
+    },
   };
 });
-
-// replace with real fetch (S3 signed url, local path, api call, etc.)
-async function fetchJobJson(jobId: string) {
-  // GET the json file associated with jobId
-  return {};
-}
-
-// replace with real projection logic / ai call
-async function runProjection(json: unknown) {
-  // process json and produce a result
-  return json;
-}

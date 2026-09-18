@@ -1,69 +1,59 @@
 // src/lib/rosBridge.ts
-// Placeholder until the real ROS bridge (rosbridge/rclnodejs/etc.) is
-// wired in. Two links out (robot publish, human publish), one link in
-// (validator subscribes for completion of either/both).
+//
+// Was a placeholder in-memory pub/sub with no connection to the real ROS
+// graph at all — publishToRos() just scheduled a setTimeout and fired
+// listeners local to this module's own Map. Nothing about it touched
+// roslib or the rosbridge WebSocket. Meanwhile src/app/api/actors/validate/route.ts
+// has its own SEPARATE real roslib.Topic subscription against actual
+// rosbridge. Those two systems never talked to each other: dispatch_node
+// never received anything real, so it never published a real completion
+// message, so the real subscriber in validate/route.ts always timed out
+// after the full COMPLETION_TIMEOUT_MS with no errors anywhere.
+//
+// This version publishes for real, over the same rosbridge connection
+// validate/route.ts uses (via connectRos), to whatever topic dispatch_node
+// actually subscribes to.
+//
+// IMPORTANT: confirm DISPATCH_TOPIC and the message shape below against
+// dispatch_node's actual subscription (topic name + message type +
+// expected JSON fields). This assumes /action/dispatch as std_msgs/String
+// with a JSON string payload, mirroring the shape validate/route.ts
+// already expects back on /action/complete — update if dispatch_node
+// expects something else.
+
+import { Topic } from "roslib";
+import { connectRos } from "@/lib/rosConnect";
+
+const DISPATCH_TOPIC = "/action/dispatch";
 
 type RosSource = "robot" | "human";
-
-type CompletionEvent = {
-  actionId: string;
-  source: RosSource;
-  result: unknown;
-};
-
-// In-memory pub/sub for now — swap for a real ROS topic subscription
-// once the bridge exists. Keyed by actionId so multiple in-flight
-// actions (shouldn't normally overlap, but safe either way) don't
-// cross-talk.
-const listeners = new Map<string, Array<(event: CompletionEvent) => void>>();
 
 export async function publishToRos(
   actionId: string,
   source: RosSource,
   payload: unknown,
 ): Promise<{ acked: true }> {
-  // Replace with a real publish call. For now, simulate ROS finishing
-  // the action shortly after publish so the listener side has something
-  // to receive during local development.
-  setTimeout(() => {
-    const subs = listeners.get(actionId) ?? [];
-    for (const fn of subs) fn({ actionId, source, result: {} });
-  }, 500);
+  const ros = await connectRos();
+  try {
+    const topic = new Topic({
+      ros,
+      name: DISPATCH_TOPIC,
+      messageType: "std_msgs/String",
+    });
 
-  return { acked: true };
-}
+    topic.publish({
+      data: JSON.stringify({ actionId, source, payload }),
+    } as any);
 
-export function waitForCompletion(
-  actionId: string,
-  sources: RosSource[],
-  timeoutMs = 30000,
-): Promise<Record<RosSource, unknown>> {
-  return new Promise((resolve, reject) => {
-    const received: Partial<Record<RosSource, unknown>> = {};
-
-    const timer = setTimeout(() => {
-      cleanup();
-      reject(new Error(`waitForCompletion: timed out waiting for ${sources.join("+")} on action ${actionId}`));
-    }, timeoutMs);
-
-    const handler = (event: CompletionEvent) => {
-      if (event.actionId !== actionId) return;
-      received[event.source] = event.result;
-
-      if (sources.every((s) => s in received)) {
-        cleanup();
-        resolve(received as Record<RosSource, unknown>);
-      }
-    };
-
-    const cleanup = () => {
-      clearTimeout(timer);
-      const subs = listeners.get(actionId) ?? [];
-      listeners.set(actionId, subs.filter((fn) => fn !== handler));
-    };
-
-    const subs = listeners.get(actionId) ?? [];
-    subs.push(handler);
-    listeners.set(actionId, subs);
-  });
+    // rosbridge publish is fire-and-forget at the protocol level — there's
+    // no built-in delivery ack. "acked: true" here only means the publish
+    // call was sent over an open connection without throwing, not that
+    // dispatch_node received or is acting on it. If you need a real ack,
+    // that has to come from dispatch_node explicitly responding (e.g. a
+    // service call, or a dedicated ack topic) rather than being inferred
+    // from the publish call succeeding.
+    return { acked: true };
+  } finally {
+    ros.close();
+  }
 }

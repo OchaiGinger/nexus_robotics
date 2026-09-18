@@ -35,15 +35,22 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      await prisma.task.create({
-        data: {
-          jobId: input.job.id,
-          type: input.job.type,
-          payload: input.job.payload as any,
-          status: "intake",
-          sortGroupId: null,
-        },
+      const existingTask = await prisma.task.findFirst({
+        where: { jobId: input.job.id },
+        orderBy: { createdAt: "asc" },
       });
+
+      if (!existingTask) {
+        await prisma.task.create({
+          data: {
+            jobId: input.job.id,
+            type: input.job.type,
+            payload: input.job.payload as any,
+            status: "intake",
+            sortGroupId: null,
+          },
+        });
+      }
 
       const output: QueueActorOutput = { label: "newJob", job: input.job };
       return NextResponse.json(output);

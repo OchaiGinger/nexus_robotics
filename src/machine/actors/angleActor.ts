@@ -18,13 +18,12 @@ type AngleActorInput = {
 };
 
 export type Step =
-  | { t: "baseline"; len: number; l: string; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" }
+  | { t: "baseline"; len: number; l: string; labels: [string, string]; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" }
   | { t: "mark"; p: [number, number]; l: string; dir: "cw" | "ccw" }
-  | { t: "ray"; l: string; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" }
-  | { t: "arc"; r: number; deg: number; cx: number; cy: number; dir: "cw" | "ccw"; l: string; a: [number, number]; b: [number, number] }
+  | { t: "ray"; l: string; labels: [string, string]; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" }
+  | { t: "arc"; r: number; deg: number; cx: number; cy: number; dir: "cw" | "ccw"; l: string; labels: [string, string]; a: [number, number]; b: [number, number] }
   | { t: "bisect"; l1: string; l2: string; deg: number; type: "angle" | "line"; l: string; m: [number, number]; substeps: Step[]; dir: "cw" | "ccw" }
-  | { t: "compass"; deg: number; l: string; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" };
-
+  | { t: "compass"; deg: number; l: string; labels: [string, string]; a: [number, number]; b: [number, number]; dir: "cw" | "ccw" };
 export type DecompItem = number | `c${number}`;
 
 export type AngleResult = {
@@ -151,38 +150,26 @@ export function initializeAngleJob(job: AngleJob): InitializedJob {
 // Step mapping — fullTaskList → Step[]
 // ─────────────────────────────────────────────
 
-function mapInstructionsToSteps(
-  instructions: DrawInstruction[],
-  dir: "cw" | "ccw"
-): Step[] {
+function mapInstructionsToSteps(instructions: DrawInstruction[], dir: "cw" | "ccw"): Step[] {
   return instructions.map((instr): Step => {
     const start = instr.start;
     const end = instr.end;
     const label = instr.label ?? "";
+    const labels = instr.labels ?? ["", ""];
     const radius = instr.radius ?? 0;
     const center = instr.center;
     const value = instr.value;
 
     switch (instr.task) {
       case "horizontal":
-        return { t: "baseline", len: value, l: label, a: start, b: end, dir };
+        return { t: "baseline", len: value, l: label, labels, a: start, b: end, dir };
       case "vertical":
       case "ray":
-        return { t: "ray", l: label, a: start, b: end, dir };
+        return { t: "ray", l: label, labels, a: start, b: end, dir };
       case "arc":
-        return {
-          t: "arc",
-          r: radius,
-          deg: value,
-          cx: center?.[0] ?? 0,
-          cy: center?.[1] ?? 0,
-          dir,
-          l: label,
-          a: start,
-          b: end,
-        };
+        return { t: "arc", r: radius, deg: value, cx: center?.[0] ?? 0, cy: center?.[1] ?? 0, dir, l: label, labels, a: start, b: end };
       case "measure":
-        return { t: "compass", deg: value, l: label, a: start, b: end, dir };
+        return { t: "compass", deg: value, l: label, labels, a: start, b: end, dir };
       case "mark":
         return { t: "mark", p: start, l: label, dir };
     }

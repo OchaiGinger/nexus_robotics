@@ -28,6 +28,7 @@ export type DrawInstruction = {
   value: number;
   center?: Point;
   label?: string;
+  labels?: [string, string]; // exact per-point letters — use this, not label.split()
   radius?: number;
 };
 
@@ -341,39 +342,36 @@ export class Draws {
    * Logs a ray between two already-known points. axes = [startLetter, endLetter].
    * Returns the ray's length (mm).
    */
-  drawRay(axes: Line): number {
-    const [start, end] = resolveLine(axes);
-    const length = distanceBetween(start, end);
-
-    this.pushInstruction({ task: "ray", start, end, value: length, label: axes.join("") });
-    return length;
-  }
+drawRay(axes: Line): number {
+  const [start, end] = resolveLine(axes);
+  const length = distanceBetween(start, end);
+  this.pushInstruction({ task: "ray", start, end, value: length, label: axes.join(""), labels: axes });
+  return length;
+}
 
   /**
    * Logs a horizontal construction line between two already-known points
    * (e.g. the baseline A-B). axes = [startLetter, endLetter].
    * Returns the line's length (mm).
    */
-  drawHorizontal(axes: Line): number {
-    const [start, end] = resolveLine(axes);
-    const length = distanceBetween(start, end);
-
-    this.pushInstruction({ task: "horizontal", start, end, value: length, label: axes.join("") });
-    return length;
-  }
+drawHorizontal(axes: Line): number {
+  const [start, end] = resolveLine(axes);
+  const length = distanceBetween(start, end);
+  this.pushInstruction({ task: "horizontal", start, end, value: length, label: axes.join(""), labels: axes });
+  return length;
+}
 
   /**
    * Logs a vertical construction line between two already-known points
    * (e.g. O to Vup/Vdown). axes = [startLetter, endLetter].
    * Returns the line's length (mm).
    */
-  drawVertical(axes: Line): number {
-    const [start, end] = resolveLine(axes);
-    const length = distanceBetween(start, end);
-
-    this.pushInstruction({ task: "vertical", start, end, value: length, label: axes.join("") });
-    return length;
-  }
+ drawVertical(axes: Line): number {
+  const [start, end] = resolveLine(axes);
+  const length = distanceBetween(start, end);
+  this.pushInstruction({ task: "vertical", start, end, value: length, label: axes.join(""), labels: axes });
+  return length;
+}
 
   /**
    * Logs an arc between two already-known points (axes), centered at
@@ -390,16 +388,11 @@ export class Draws {
     let angleDeg = Math.abs((angle2 - angle1) * (180 / Math.PI));
     if (angleDeg > 180) angleDeg = 360 - angleDeg;
 
-    this.pushInstruction({
-      task: "arc",
-      start,
-      end,
-      value: angleDeg,
-      center: resolvePoint(pinLocation),
-      label: axes.join(""),
-      radius,
-    });
-    return angleDeg;
+this.pushInstruction({
+    task: "arc", start, end, value: angleDeg, center: resolvePoint(pinLocation),
+    label: axes.join(""), labels: axes, radius,
+  });
+  return angleDeg
   }
 
   /**
@@ -408,10 +401,9 @@ export class Draws {
    * but semantically distinct — this is the "measure with a compass" step.
    * axes = [startLetter, endLetter]. Returns the measured distance (mm).
    */
- drawMeasure(axes: Line): void {
+drawMeasure(axes: Line): void {
   const [start, end] = resolveLine(axes);
-
-  this.pushInstruction({ task: "measure", start, end, value: 0, label: axes.join("") });
+  this.pushInstruction({ task: "measure", start, end, value: 0, label: axes.join(""), labels: axes });
 }
 
   /**

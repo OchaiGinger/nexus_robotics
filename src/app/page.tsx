@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/link";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useNexusMachine } from "@/app/context/machine-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +23,7 @@ import {
   GearAgentPayload,
   PolygonAgentPayload,
   JobType,
+  ProjectionAgentPayload,
   TriangleType,
   PolygonType,
 } from "@/lib/schemas/job-payloads";
@@ -102,6 +102,189 @@ const emptyPolygon: PolygonAgentPayload = {
   dimensions: { type: "equilateral", sideLengthMm: NaN },
 };
 
+const emptyProjection: ProjectionAgentPayload = {
+  label: "",
+  imageDataUrl: undefined,
+  imageMimeType: undefined,
+  trellisModelUrl: undefined,
+  trellisRenderUrl: undefined,
+};
+
+type JobSummary = {
+  id: string;
+  type: JobType;
+  status: "queued" | "running" | "completed" | "failed";
+  canResume: boolean;
+  progress: number;
+  taskCount: number;
+  completedTaskCount: number;
+  actionCount: number;
+  completedActionCount: number;
+  createdAt: string;
+  lastActivity: string;
+  payload: Record<string, unknown>;
+};
+
+type ProjectionArtifact = {
+  kind: "local-preview" | "provider";
+  vertices?: number[][];
+  faces?: number[][];
+  modelUrl?: string;
+  renderUrl?: string;
+  provider?: string;
+};
+
+type ProjectionApiResponse = {
+  jobId?: string;
+  artifact?: ProjectionArtifact;
+  error?: string;
+};
+
+const PROJECTION_EXPORT_ANGLES = [0, 45, 90, 180, 270, 315];
+
+function downloadDataUrl(dataUrl: string, filename: string) {
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = filename;
+  link.click();
+}
+
+function drawProjectionScene(
+  canvas: HTMLCanvasElement,
+  artifact: ProjectionArtifact | null,
+  image: HTMLImageElement | null,
+  yawDegrees: number,
+  pitchDegrees: number,
+) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const width = canvas.width;
+  const height = canvas.height;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#f8fafc";
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = "#e2e8f0";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < width; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+  }
+  for (let y = 0; y < height; y += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+
+  const yaw = (yawDegrees * Math.PI) / 180;
+  const pitch = (pitchDegrees * Math.PI) / 180;
+  const scale = Math.min(width, height) / 5.8;
+  const centerX = width / 2;
+  const centerY = height / 2 + 20;
+
+  const project = (point: number[]) => {
+    const [x, y, z] = point;
+    const rotatedX = x * Math.cos(yaw) - z * Math.sin(yaw);
+    const rotatedZ = x * Math.sin(yaw) + z * Math.cos(yaw);
+    const rotatedY = y * Math.cos(pitch) - rotatedZ * Math.sin(pitch);
+    const depth = y * Math.sin(pitch) + rotatedZ * Math.cos(pitch);
+    return {
+      x: centerX + rotatedX * scale,
+      y: centerY - rotatedY * scale,
+      depth,
+    };
+  };
+
+  if (image) {
+    const corners = [
+      [-1.05, -0.7, 0],
+      [1.05, -0.7, 0],
+      [1.05, 0.7, 0],
+      [-1.05, 0.7, 0],
+    ].map(project);
+    const [a, b, , d] = corners;
+    ctx.save();
+    ctx.setTransform(
+      b.x - a.x,
+      b.y - a.y,
+      d.x - a.x,
+      d.y - a.y,
+      a.x,
+      a.y,
+    );
+    ctx.globalAlpha = 0.82;
+    ctx.drawImage(image, 0, 0, 1, 1);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
+  if (!artifact?.vertices?.length || !artifact.faces?.length) {
+    ctx.fillStyle = "#475569";
+    ctx.font = "14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      artifact ? "Trellis model ready" : "Upload an image to build a 3D preview",
+      centerX,
+      42,
+    );
+    return;
+  }
+
+  const projectedFaces = artifact.faces.map((face) => ({
+    face,
+    points: face.map((index) => project(artifact.vertices![index])),
+  }));
+  projectedFaces.sort(
+    (a, b) =>
+      b.points.reduce((sum, point) => sum + point.depth, 0) -
+      a.points.reduce((sum, point) => sum + point.depth, 0),
+  );
+
+  for (const { points } of projectedFaces) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (const point of points.slice(1)) ctx.lineTo(point.x, point.y);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(139, 92, 246, 0.16)";
+    ctx.fill();
+    ctx.strokeStyle = "#7c3aed";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function renderProjectionFrame(
+  artifact: ProjectionArtifact,
+  image: HTMLImageElement | null,
+  yawDegrees: number,
+  pitchDegrees: number,
+) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 620;
+  drawProjectionScene(canvas, artifact, image, yawDegrees, pitchDegrees);
+  return canvas.toDataURL("image/png");
+}
+
+function formatJobDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function jobTitle(job: JobSummary) {
+  const label = job.payload.label;
+  return typeof label === "string" && label.trim()
+    ? label
+    : job.type.replace("Agent", "");
+}
+
 export default function Home() {
   const { state, send } = useNexusMachine();
   const router = useNextRouter();
@@ -111,14 +294,53 @@ export default function Home() {
   const [anglePayload, setAnglePayload] = useState(emptyAngle);
   const [gearPayload, setGearPayload] = useState(emptyGear);
   const [polygonPayload, setPolygonPayload] = useState(emptyPolygon);
+  const [projectionPayload, setProjectionPayload] = useState(emptyProjection);
+  const [projectionImage, setProjectionImage] = useState<HTMLImageElement | null>(null);
+  const [projectionArtifact, setProjectionArtifact] = useState<ProjectionArtifact | null>(null);
+  const [projectionStatus, setProjectionStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [projectionYaw, setProjectionYaw] = useState(35);
+  const [projectionPitch, setProjectionPitch] = useState(24);
+  const [jobs, setJobs] = useState<JobSummary[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobsError, setJobsError] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const loadJobs = useCallback(async () => {
+    setJobsLoading(true);
+    setJobsError(null);
+
+    try {
+      const response = await fetch("/api/jobs");
+      const data = (await response.json()) as { jobs?: JobSummary[]; error?: string };
+      if (!response.ok) {
+        throw new Error(data.error ?? "Could not load jobs");
+      }
+      setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+    } catch (err) {
+      setJobsError(err instanceof Error ? err.message : "Could not load jobs");
+      setJobs([]);
+    } finally {
+      setJobsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadJobs();
+  }, [loadJobs]);
 
   const resetForms = () => {
     setAnglePayload(emptyAngle);
     setGearPayload(emptyGear);
     setPolygonPayload(emptyPolygon);
+    setProjectionPayload(emptyProjection);
+    setProjectionImage(null);
+    setProjectionArtifact(null);
+    setProjectionStatus("idle");
+    setProjectionYaw(35);
+    setProjectionPitch(24);
   };
 
   const currentPayload = (): unknown => {
@@ -129,6 +351,8 @@ export default function Home() {
         return gearPayload;
       case "polygonAgent":
         return polygonPayload;
+      case "projectionAgent":
+        return projectionPayload;
       default:
         return {};
     }
@@ -142,6 +366,11 @@ export default function Home() {
 
   const handleSubmit = async () => {
     if (!selectedType) return;
+    if (selectedType === "projectionAgent" && !projectionPayload.imageDataUrl) {
+      setError("Upload a source image before submitting a projection job");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -167,11 +396,130 @@ export default function Home() {
       send({ type: "new_job", job: result.job });
       setSelectedType(null);
       resetForms();
+      await loadJobs();
       router.push("/graph");
     } catch {
       setError("Could not reach the validation API");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const resumeJob = async (jobId: string) => {
+    if (!isIdle) return;
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId }),
+      });
+      const data = (await response.json()) as {
+        job?: { id: string; type: JobType; payload: unknown };
+        error?: string;
+      };
+      if (!response.ok || !data.job) {
+        throw new Error(data.error ?? "Could not restore job");
+      }
+
+      send({ type: "new_job", job: data.job });
+      await loadJobs();
+      router.push("/graph");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not restore job");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleProjectionFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Projection source must be an image");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Projection image must be smaller than 5 MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imageDataUrl = typeof reader.result === "string" ? reader.result : "";
+      if (!imageDataUrl) return;
+
+      const image = new Image();
+      image.onload = () => {
+        setProjectionImage(image);
+        setProjectionPayload((current) => ({
+          ...current,
+          imageDataUrl,
+          imageMimeType: file.type,
+        }));
+        setProjectionArtifact(null);
+        setProjectionStatus("idle");
+        setError(null);
+      };
+      image.src = imageDataUrl;
+    };
+    reader.onerror = () => setError("Could not read the projection image");
+    reader.readAsDataURL(file);
+  };
+
+  const handleProjectionReconstruct = async () => {
+    if (!projectionPayload.imageDataUrl) {
+      setError("Upload a source image before reconstruction");
+      return;
+    }
+
+    setProjectionStatus("loading");
+    setError(null);
+    try {
+      const response = await fetch("/api/projection/reconstruct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobId: `preview-${Date.now()}`,
+          payload: projectionPayload,
+        }),
+      });
+      const data = (await response.json()) as ProjectionApiResponse & { steps?: unknown[] };
+      if (!response.ok || !data.artifact) {
+        throw new Error(data.error ?? "Trellis reconstruction failed");
+      }
+
+      setProjectionArtifact(data.artifact);
+      setProjectionPayload((current) => ({
+        ...current,
+        trellisModelUrl: data.artifact.modelUrl,
+        trellisRenderUrl: data.artifact.renderUrl,
+      }));
+      setProjectionStatus("ready");
+    } catch (err) {
+      setProjectionStatus("error");
+      setError(err instanceof Error ? err.message : "Trellis reconstruction failed");
+    }
+  };
+
+  const handleProjectionSnapshot = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !projectionArtifact) return;
+    downloadDataUrl(canvas.toDataURL("image/png"), "projection-snapshot.png");
+  };
+
+  const handleProjectionExports = () => {
+    if (!projectionArtifact || !projectionImage) return;
+    for (const angle of PROJECTION_EXPORT_ANGLES) {
+      downloadDataUrl(
+        renderProjectionFrame(projectionArtifact, projectionImage, angle, projectionPitch),
+        `projection-${angle}deg.png`,
+      );
     }
   };
 
@@ -206,6 +554,18 @@ export default function Home() {
 
   const selectedJob = JOB_TYPES.find((j) => j.type === selectedType);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    drawProjectionScene(
+      canvas,
+      projectionArtifact,
+      projectionImage,
+      projectionYaw,
+      projectionPitch,
+    );
+  }, [projectionArtifact, projectionImage, projectionPitch, projectionYaw]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       {/* Header */}
@@ -230,6 +590,85 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-8">
+        <section className="mb-8">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+                Recent Jobs
+              </h2>
+              <p className="mt-1 text-xs text-slate-400">
+                Persisted work can be resumed from the last stored task state.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadJobs} disabled={jobsLoading}>
+              {jobsLoading ? "Refreshing..." : "Refresh"}
+            </Button>
+          </div>
+
+          {jobsError && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {jobsError}
+            </div>
+          )}
+
+          {!jobsLoading && !jobsError && jobs.length === 0 && (
+            <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white/60 px-4 py-6 text-center text-sm text-slate-400">
+              No persisted jobs yet.
+            </div>
+          )}
+
+          {jobs.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {jobs.map((job) => {
+                const statusClass = {
+                  queued: "bg-slate-100 text-slate-600",
+                  running: "bg-amber-50 text-amber-700",
+                  completed: "bg-emerald-50 text-emerald-700",
+                  failed: "bg-red-50 text-red-700",
+                }[job.status];
+                const progressPercent = Math.round(job.progress * 100);
+
+                return (
+                  <div key={job.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="truncate font-semibold text-slate-900">{jobTitle(job)}</h3>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusClass}`}>
+                            {job.status}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {job.type} · {job.completedTaskCount}/{job.taskCount} tasks ·{" "}
+                          {job.completedActionCount}/{job.actionCount} actions
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          Updated {formatJobDate(job.lastActivity)}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!job.canResume || !isIdle || submitting}
+                        onClick={() => void resumeJob(job.id)}
+                      >
+                        {job.canResume ? "Resume" : "Closed"}
+                      </Button>
+                    </div>
+                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className={`h-full rounded-full ${job.status === "completed" ? "bg-emerald-500" : job.status === "failed" ? "bg-red-500" : "bg-indigo-500"}`}
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    <div className="mt-1 text-right text-[11px] text-slate-400">{progressPercent}%</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
         {/* Job type selection */}
         <section>
           <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">
@@ -604,9 +1043,131 @@ export default function Home() {
                 )}
 
                 {selectedType === "projectionAgent" && (
-                  <p className="text-sm text-slate-500">
-                    Projection agent is not yet configured. Submit to proceed with defaults.
-                  </p>
+                  <div className="space-y-5">
+                    <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
+                      <div>
+                        <Label htmlFor="projection-label">Projection label</Label>
+                        <Input
+                          id="projection-label"
+                          placeholder="e.g. Bracket reference"
+                          value={projectionPayload.label}
+                          onChange={(event) =>
+                            setProjectionPayload({ ...projectionPayload, label: event.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Source image</Label>
+                        <Input
+                          id="projection-image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProjectionFile}
+                          disabled={submitting}
+                          className="cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    {projectionPayload.imageDataUrl && (
+                      <div className="grid gap-4 lg:grid-cols-[1fr_1.25fr]">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm font-medium text-slate-800">Uploaded source</div>
+                              <div className="text-xs text-slate-500">
+                                {projectionPayload.imageMimeType ?? "image"}
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleProjectionReconstruct}
+                              disabled={submitting || projectionStatus === "loading"}
+                            >
+                              {projectionStatus === "loading" ? "Reconstructing..." : "Reconstruct 3D"}
+                            </Button>
+                          </div>
+                          <img
+                            src={projectionPayload.imageDataUrl}
+                            alt="Uploaded projection source"
+                            className="mt-3 max-h-56 w-full rounded-md object-contain bg-white"
+                          />
+                          {projectionArtifact && (
+                            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                              <span className={`rounded-full px-2 py-1 ${projectionArtifact.kind === "provider" ? "bg-purple-50 text-purple-700" : "bg-slate-200 text-slate-600"}`}>
+                                {projectionArtifact.kind === "provider" ? "Trellis provider" : "Local preview"}
+                              </span>
+                              {projectionArtifact.provider && (
+                                <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">
+                                  {projectionArtifact.provider}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm font-medium text-slate-800">3D projection workbench</div>
+                              <div className="text-xs text-slate-500">
+                                {projectionArtifact ? "Adjust the view, capture a snapshot, or export angles." : "Reconstruct the uploaded image to enable the workbench."}
+                              </div>
+                            </div>
+                          </div>
+                          <canvas
+                            ref={canvasRef}
+                            width={900}
+                            height={620}
+                            className="mt-3 h-auto w-full rounded-md border border-slate-200 bg-white"
+                          />
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <div>
+                              <Label htmlFor="projection-yaw">Yaw ({projectionYaw}°)</Label>
+                              <Input
+                                id="projection-yaw"
+                                type="range"
+                                min={0}
+                                max={360}
+                                value={projectionYaw}
+                                onChange={(event) => setProjectionYaw(Number(event.target.value))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="projection-pitch">Pitch ({projectionPitch}°)</Label>
+                              <Input
+                                id="projection-pitch"
+                                type="range"
+                                min={0}
+                                max={90}
+                                value={projectionPitch}
+                                onChange={(event) => setProjectionPitch(Number(event.target.value))}
+                              />
+                            </div>
+                          </div>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleProjectionSnapshot}
+                              disabled={!projectionArtifact}
+                            >
+                              Snapshot PNG
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleProjectionExports}
+                              disabled={!projectionArtifact || !projectionImage}
+                            >
+                              Export 6 angles
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {error && (
