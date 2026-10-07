@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="nexus_arm">
+  <group name="arm">
+    <chain base_link="base_link" tip_link="j6_kotelo__cut_extrude3"/>
+  </group>
+  <group_state name="home" group="arm">
+    <joint name="base_shoulder_joint" value="0"/>
+    <joint name="shoulder_upperarm_joint" value="0"/>
+    <joint name="revolute_3" value="0"/>
+    <joint name="forearm_wrist" value="0"/>
+    <joint name="wrist_tool" value="0"/>
+  </group_state>
+  <group_state name="demo_a" group="arm">
+    <joint name="base_shoulder_joint" value="1.57"/>
+    <joint name="shoulder_upperarm_joint" value="0.78"/>
+    <joint name="revolute_3" value="0.78"/>
+    <joint name="forearm_wrist" value="0"/>
+    <joint name="wrist_tool" value="0.78"/>
+  </group_state>
+  <group_state name="demo_b" group="arm">
+    <joint name="base_shoulder_joint" value="-1.57"/>
+    <joint name="shoulder_upperarm_joint" value="-0.5"/>
+    <joint name="revolute_3" value="-0.78"/>
+    <joint name="forearm_wrist" value="1.57"/>
+    <joint name="wrist_tool" value="0"/>
+  </group_state>
+  <virtual_joint name="fixed_base" type="fixed" parent_frame="world" child_link="base_link"/>
+</robot>

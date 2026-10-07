@@ -1,0 +1,7 @@
+float32 x_mm
+float32 y_mm
+---
+bool success
+string message
+---
+string current_step

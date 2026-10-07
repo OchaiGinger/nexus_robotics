@@ -1,0 +1,20 @@
+  grid_node:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - rosbridge
+    ports:
+      - "8091:8091"
+    volumes:
+      - ./logs:/ros2_ws/logs
+      - ./captures:/ros2_ws/captures
+    command: >
+      ros2 run nexus_bridge grid_node --ros-args
+      -p phone_stream_url:=http://10.197.0.147:8080/video
+      -p paper_size:=A4
+    # phone_stream_url has no real default on purpose — the phone's IP
+    # changes between sessions. Either edit this line each time before
+    # `docker compose up`, or start it standalone with the current IP:
+    #   docker compose run --rm grid_node ros2 run nexus_bridge grid_node \
+    #     --ros-args -p phone_stream_url:=http://192.168.1.23:8080/video

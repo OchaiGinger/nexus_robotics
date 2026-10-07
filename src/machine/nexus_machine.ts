@@ -98,6 +98,11 @@ type NexusContext = {
   robotPlan?: unknown;
   humanInstructions?: unknown;
   humanResult?: unknown;
+  // Results captured by rosActor from the ROS completion topic. rosActor
+  // now subscribes to its own completion BEFORE publishing dispatch (see
+  // rosActor.ts), so these are populated reliably instead of racing a
+  // later, separate ROS subscription in validator. validator reads these
+  // straight from context instead of listening on ROS itself.
   robotRosResult?: unknown;
   humanRosResult?: unknown;
   // per-side validation outcomes for the "both" (simultaneous
@@ -462,10 +467,12 @@ const machine = setup({
                 jobId: context.jobId!,
                 pair: (event.output as any).pair,
               }),
-              // clear any leftover per-side validation state from a
-              // previous "both" action before starting the next one
+              // clear any leftover per-side validation/ROS-result state
+              // from a previous action before starting the next one
               robotValidation: undefined,
               humanValidation: undefined,
+              robotRosResult: undefined,
+              humanRosResult: undefined,
             }),
             reenter: true,
           },
@@ -567,7 +574,13 @@ const machine = setup({
                   source: "robot",
                   payload: context.robotPlan,
                 }),
-                onDone: { target: "#nexus.delegator.validator", reenter: true },
+                onDone: {
+                  target: "#nexus.delegator.validator",
+                  actions: assign({
+                    robotRosResult: ({ event }) => (event.output as any).result,
+                  }),
+                  reenter: true,
+                },
                 onError: { target: "#nexus.delegator.executionError", reenter: true },
               },
             },
@@ -634,6 +647,9 @@ const machine = setup({
                 }),
                 onDone: {
                   target: "#nexus.delegator.validator",
+                  actions: assign({
+                    humanRosResult: ({ event }) => (event.output as any).result,
+                  }),
                   reenter: true,
                 },
                 onError: {
@@ -655,13 +671,11 @@ const machine = setup({
         // "done", which is exactly "validating the one that returns
         // first, staying pending on the other, until both pass."
         //
-        // NOTE: these regions previously had placeholder comments
-        // ("/* same as robotBranch.robotActor above */") instead of
-        // real invoke configs. An empty state node has nothing to
-        // invoke and nothing to transition on, so the machine parked
-        // silently inside bothBranch forever and validator was never
-        // reached. Filled in below with real invokes (distinct ids so
-        // they don't collide with the single-branch versions).
+        // Each region's rosActor now also captures its result into
+        // robotRosResult/humanRosResult (previously these fields were
+        // declared in context but never actually assigned anywhere) so
+        // validator can read both sides' results directly instead of
+        // re-subscribing to ROS itself.
         bothBranch: {
           type: "parallel",
           states: {
@@ -699,7 +713,13 @@ const machine = setup({
                       source: "robot",
                       payload: context.robotPlan,
                     }),
-                    onDone: { target: "done", reenter: true },
+                    onDone: {
+                      target: "done",
+                      actions: assign({
+                        robotRosResult: ({ event }) => (event.output as any).result,
+                      }),
+                      reenter: true,
+                    },
                     onError: {
                       target: "#nexus.delegator.executionError",
                       reenter: true,
@@ -765,7 +785,13 @@ const machine = setup({
                       source: "human",
                       payload: context.humanResult,
                     }),
-                    onDone: { target: "done", reenter: true },
+                    onDone: {
+                      target: "done",
+                      actions: assign({
+                        humanRosResult: ({ event }) => (event.output as any).result,
+                      }),
+                      reenter: true,
+                    },
                     onError: {
                       target: "#nexus.delegator.executionError",
                       reenter: true,
@@ -788,6 +814,8 @@ const machine = setup({
               actionId: context.actionId!,
               mode: context.dispatchMode!,
               role: context.dispatchRole,
+              robotResult: context.robotRosResult,
+              humanResult: context.humanRosResult,
             }),
             onDone: [
               {

@@ -1,0 +1,6 @@
+# Sent by screen_state_node's internal logic (triggered by SetScreenState
+# calls) down to the Arduino driving the physical 16-char OLED line.
+# Truncated to 16 chars if longer — the display can't show more anyway.
+string text
+---
+bool success

@@ -1,0 +1,13 @@
+# Goal — safety cap so a search never spins forever if nothing ever
+# cancels it (e.g. vision never finds anything).
+float32 max_angle_deg
+---
+# Result
+# completed_full_rotation == true means it hit max_angle_deg and gave up
+# on its own, WITHOUT being canceled — the caller should treat this as
+# "not found".
+bool completed_full_rotation
+float32 final_angle_deg
+---
+# Feedback — streamed continuously while rotating
+float32 current_angle_deg

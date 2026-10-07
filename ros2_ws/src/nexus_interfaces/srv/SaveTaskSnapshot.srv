@@ -1,0 +1,5 @@
+string task_id
+string task_type
+---
+bool success
+string path   # where it was saved, for logging

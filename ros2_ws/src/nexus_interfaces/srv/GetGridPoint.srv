@@ -1,0 +1,9 @@
+# Validates a point given in paper millimeters against the last
+# successfully detected+rectified paper, and adds it to the live overlay
+# (visible on the MJPEG viewer, and included in the next screenshot).
+float32 x_mm
+float32 y_mm
+string label   # optional, drawn next to the point on the overlay
+---
+bool success
+string message

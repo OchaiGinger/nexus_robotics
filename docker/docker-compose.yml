@@ -6,13 +6,6 @@ services:
     ports:
       - "9090:9090"
     command: ros2 launch rosbridge_server rosbridge_websocket_launch.xml
-    # network_mode: host removed. On Docker Desktop for Windows/Mac,
-    # host networking binds to the hidden Linux VM's network namespace,
-    # NOT to the Windows host's actual localhost — so `ws://localhost:9090`
-    # from a Windows-side `npm run dev` process could never reach it,
-    # even though the container itself reports listening fine.
-    # Bridge mode (the default) + the `ports:` mapping above is what
-    # actually forwards 9090 to Windows localhost.
 
   nexus_nodes:
     build:
@@ -20,9 +13,50 @@ services:
       dockerfile: docker/Dockerfile
     depends_on:
       - rosbridge
-    command: ros2 run nexus_bridge dispatch_node
-    # Left on default (bridge) networking too, so it shares a
-    # Compose-managed network with rosbridge and can still reach it
-    # by service name (rosbridge) for the ROS graph / DDS side.
-    # If dispatch_node and rosbridge stop discovering each other after
-    # this change, see the DDS discovery note below.
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    volumes:
+      - ./logs:/ros2_ws/logs
+      - ./captures:/ros2_ws/captures
+    command: ros2 launch nexus_bridge bringup.launch.py use_mock_serial:=false serial_port:=/dev/ttyUSB0
+
+  vision_node:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - rosbridge
+    volumes:
+      - ./captures:/ros2_ws/captures
+      - ./yolo_weights:/ros2_ws/weights
+    command: ros2 run nexus_bridge vision_node
+    extra_hosts:
+      - "host.docker.internal:172.23.128.1"
+
+  grid_node:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - rosbridge
+    ports:
+      - "8091:8091"
+    volumes:
+      - ./captures:/ros2_ws/captures
+      - ./logs:/ros2_ws/logs
+    command: ros2 run nexus_bridge grid_node --ros-args -p paper_size:=A4
+
+  moveit:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      - DISPLAY=:0
+      - WAYLAND_DISPLAY=wayland-0
+      - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
+      - LIBGL_ALWAYS_SOFTWARE=1
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /mnt/wslg:/mnt/wslg
+    command: ros2 launch nexus_moveit_config demo.launch.py

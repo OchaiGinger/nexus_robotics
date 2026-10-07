@@ -1,0 +1,8 @@
+# Call with the sheet placed at its measured spot.
+# origin = robot-frame position of the paper's (0,0) corner (top-left in the camera image).
+# Paper +x -> robot +x, paper +y -> robot -y.
+float32 origin_x_mm
+float32 origin_y_mm
+---
+bool success
+string message

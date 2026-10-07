@@ -1,0 +1,11 @@
+# Request a named "configuration" move from motion_node.
+# config_name selects a placeholder pose/angle table entry (see
+# motion_node.CONFIG_ANGLES). x/y are only used by configs that need a
+# target position (currently: "pick") — pass 0.0 for configs that ignore
+# them.
+string config_name
+float32 x
+float32 y
+---
+bool success
+string message

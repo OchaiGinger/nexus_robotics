@@ -1,0 +1,9 @@
+float32 from_x_mm
+float32 from_y_mm
+float32 to_x_mm
+float32 to_y_mm
+string label
+---
+bool success
+string message
+string orientation   # "vertical" | "horizontal" | "diagonal", computed here

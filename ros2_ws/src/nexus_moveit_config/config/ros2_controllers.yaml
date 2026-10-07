@@ -1,0 +1,20 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+arm_controller:
+  ros__parameters:
+    joints:
+      - base_shoulder_joint
+      - shoulder_upperarm_joint
+      - revolute_3
+      - forearm_wrist
+      - wrist_tool
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position

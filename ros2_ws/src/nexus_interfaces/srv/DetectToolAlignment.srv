@@ -1,0 +1,16 @@
+# For pickAndPlace's "arrange" step: finds the placed tool's bounding
+# box, compares it against the target line, and reports which side of
+# the box is nearest the line plus a push vector to reduce that
+# deviation. One-shot per call — pick_and_place_node calls this
+# repeatedly in its own bounded convergence loop.
+string tool_label
+float32 line_from_x_mm
+float32 line_from_y_mm
+float32 line_to_x_mm
+float32 line_to_y_mm
+---
+bool found
+float32 deviation_mm      # perpendicular distance from nearest box side to the line
+string nearest_side       # "top" | "bottom" | "left" | "right"
+float32 push_x_mm         # suggested nudge, in paper mm, to reduce deviation
+float32 push_y_mm

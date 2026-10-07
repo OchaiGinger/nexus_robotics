@@ -1,0 +1,30 @@
+# wrist_tool is URDF -45..90 deg but MoveIt is locked to 0..45 deg
+joint_limits:
+  base_shoulder_joint:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 1.0
+  shoulder_upperarm_joint:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 1.0
+  revolute_3:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 1.0
+  forearm_wrist:
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 1.0
+  wrist_tool:
+    has_position_limits: true
+    min_position: 0.0
+    max_position: 0.785398
+    has_velocity_limits: true
+    max_velocity: 1.0
+    has_acceleration_limits: true
+    max_acceleration: 1.0

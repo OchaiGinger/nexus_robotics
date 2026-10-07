@@ -1,0 +1,1948 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="nexus_arm">
+  <link name="100mm_aluputki__boss_extrude1">
+    <inertial>
+      <mass value="6.37743e-06" />
+      <origin xyz="-0.0725 5.18817e-19 2.77515e-18" rpy="0 -0 0" />
+      <inertia ixx="3.14089e-10" ixy="0" ixz="0" iyy="1.13308e-08" iyz="0" izz="1.13308e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.145 0 2.40731e-18" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/_100mm_aluputki__Boss_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="15mm_1_6_rikka__boss_extrude1">
+    <inertial>
+      <mass value="3.25469e-07" />
+      <origin xyz="0.0008 -1.65814e-19 5.10435e-19" rpy="0.0136256 -0 0" />
+      <inertia ixx="2.88447e-11" ixy="0" ixz="0" iyy="1.44918e-11" iyz="0" izz="1.44918e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0.0136256 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/_15mm_1_6_rikka__Boss_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="15mm_rikka_1_2mm__boss_extrude1">
+    <inertial>
+      <mass value="1.64934e-07" />
+      <origin xyz="-7.48816e-19 -1.93989e-18 0.0006" rpy="0 -0 1.35373" />
+      <inertia ixx="6.46251e-12" ixy="0" ixz="0" iyy="6.46251e-12" iyz="0" izz="1.28854e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 1.35373" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/_15mm_rikka_1_2mm__Boss_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="3m_htd_16t_6mm_bore__cut_extrude1">
+    <inertial>
+      <mass value="3.0459e-06" />
+      <origin xyz="-2.5395e-09 8.35438e-05 0.00826378" rpy="0 -0 0" />
+      <inertia ixx="1.48264e-10" ixy="0" ixz="0" iyy="1.49903e-10" iyz="1.08499e-12" izz="1.15902e-10" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/_3M_HTD_16T_6mm_Bore__Cut_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="5mm_akseli_1__cut_extrude1">
+    <inertial>
+      <mass value="5.55378e-07" />
+      <origin xyz="1.14905e-19 0.0157578 -2.29071e-10" rpy="0 -0 0" />
+      <inertia ixx="3.94817e-11" ixy="0" ixz="0" iyy="1.75865e-12" iyz="0" izz="3.94356e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 5.05536e-19" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/_5mm_akseli_1__Cut_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="5mm_akseli_2__boss_extrude1">
+    <inertial>
+      <mass value="2.55254e-07" />
+      <origin xyz="0 0.0065 -1.54047e-19" rpy="0 -0 0" />
+      <inertia ixx="3.99367e-12" ixy="0" ixz="0" iyy="7.9767e-13" iyz="0" izz="3.99367e-12" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/_5mm_akseli_2__Boss_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="6mm_akseli__boss_extrude1">
+    <inertial>
+      <mass value="3.33794e-06" />
+      <origin xyz="-1.54047e-19 0 0.085" rpy="0 -0 0" />
+      <inertia ixx="8.04409e-09" ixy="0" ixz="0" iyy="8.04409e-09" iyz="0" izz="1.04311e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/_6mm_akseli__Boss_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="90mm_aluputki__boss_extrude1">
+    <inertial>
+      <mass value="3.95841e-06" />
+      <origin xyz="-3.67842e-19 -8.35872e-19 6.93889e-18" rpy="0 -0 0" />
+      <inertia ixx="2.7694e-09" ixy="0" ixz="0" iyy="2.7694e-09" iyz="0" izz="1.94952e-10" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.045" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/_90mm_aluputki__Boss_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="arm1v2__fillet6">
+    <inertial>
+      <mass value="0.000166814" />
+      <origin xyz="-7.35387e-05 0.0696655 0.0104312" rpy="0 -0 0" />
+      <inertia ixx="6.89044e-07" ixy="1.09422e-09" ixz="2.29729e-11" iyy="5.63152e-08" iyz="-9.88982e-09" izz="7.27539e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Arm1v2__Fillet6.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="arm2mountv2__cut_extrude12">
+    <inertial>
+      <mass value="0.000123549" />
+      <origin xyz="0.0207074 0.00813862 -0.00455907" rpy="0 -0 0" />
+      <inertia ixx="9.19076e-08" ixy="-6.25117e-09" ixz="2.81919e-09" iyy="7.83811e-08" iyz="-3.65922e-09" izz="6.27783e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Arm2Mountv2__Cut_Extrude12.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="arm_2_3__chamfer6">
+    <inertial>
+      <mass value="1.65831e-05" />
+      <origin xyz="0.00234237 -0.0440887 -0.0119999" rpy="0 -0 0" />
+      <inertia ixx="1.85675e-08" ixy="2.69273e-10" ixz="-1.86604e-15" iyy="7.15978e-09" iyz="2.60963e-14" izz="1.18753e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.002 -0.115 -0.012" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Arm_2_3__Chamfer6.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="arm_4_3__fillet1">
+    <inertial>
+      <mass value="1.02738e-05" />
+      <origin xyz="0.00203983 -0.0444002 0.0120673" rpy="0 -0 0" />
+      <inertia ixx="9.51312e-09" ixy="2.41433e-10" ixz="-3.43147e-12" iyy="3.06365e-09" iyz="1.56347e-11" izz="6.59078e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 -0.115 0.012" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Arm_4_3__Fillet1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="base_predeterminado__cortar_extruir5">
+    <inertial>
+      <mass value="1.65354e-05" />
+      <origin xyz="-9.44269e-07 9.44269e-07 -0.00482353" rpy="0 -0 0" />
+      <inertia ixx="2.57649e-09" ixy="-2.4203e-13" ixz="-3.5754e-14" iyy="2.57649e-09" iyz="3.5754e-14" izz="4.87511e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="-1.56946e-16 -6.28814e-17 -0.01" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Base_Predeterminado__Cortar_Extruir5.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="base_predeterminado__cortar_extruir5_1">
+    <inertial>
+      <mass value="1.65354e-05" />
+      <origin xyz="-9.44269e-07 9.44269e-07 -0.00482353" rpy="0 -0 0" />
+      <inertia ixx="2.57649e-09" ixy="-2.4203e-13" ixz="-3.5754e-14" iyy="2.57649e-09" iyz="3.5754e-14" izz="4.87511e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="-1.56946e-16 -6.28814e-17 -0.01" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Base_Predeterminado__Cortar_Extruir5.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="baseplate__fillet1">
+    <inertial>
+      <mass value="9.29476e-05" />
+      <origin xyz="0.036263 0.00607301 -7.61791e-18" rpy="0 -0 0" />
+      <inertia ixx="3.99623e-08" ixy="-9.35893e-10" ixz="0" iyy="2.06487e-07" iyz="0" izz="1.6866e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Baseplate__Fillet1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="basewall_2_v2__cut_extrude11">
+    <inertial>
+      <mass value="0.000203287" />
+      <origin xyz="0.00121104 0.0323675 -0.0149324" rpy="0 -0 0" />
+      <inertia ixx="3.03656e-07" ixy="-8.02038e-09" ixz="-1.7539e-08" iyy="2.63906e-07" iyz="2.96627e-08" izz="1.21319e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0.01 0.04 -0.0375" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/BaseWall_2_v2__Cut_Extrude11.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="basewall_cover_v2__chamfer4">
+    <inertial>
+      <mass value="3.93025e-05" />
+      <origin xyz="0.0397926 -0.00919933 0.015027" rpy="0 -0 0" />
+      <inertia ixx="1.97508e-08" ixy="8.45435e-09" ixz="-1.44866e-09" iyy="2.96449e-08" iyz="-4.37302e-10" izz="4.61307e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0.114 0.0015 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Basewall_cover_v2__Chamfer4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="bearing_adapter_j6_housing__boss_extrude2">
+    <inertial>
+      <mass value="3.67883e-06" />
+      <origin xyz="0.00569067 -0.00369904 -2.05538e-19" rpy="0 -0 0" />
+      <inertia ixx="1.71816e-10" ixy="6.30057e-12" ixz="0" iyy="4.46852e-10" iyz="0" izz="3.15086e-10" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0009 -0.008 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/bearing_adapter_J6_housing__Boss_Extrude2.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="bearing_adapter_j6_housing__boss_extrude2_1">
+    <inertial>
+      <mass value="3.67883e-06" />
+      <origin xyz="0.00659067 0.00430096 -2.05538e-19" rpy="0 -0 0" />
+      <inertia ixx="1.71816e-10" ixy="6.30057e-12" ixz="0" iyy="4.46852e-10" iyz="0" izz="3.15086e-10" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/bearing_adapter_J6_housing__Boss_Extrude2.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="bottom_spacer__chamfer1">
+    <inertial>
+      <mass value="6.94463e-06" />
+      <origin xyz="4.57385e-17 -0.00101854 -1.51367e-16" rpy="0 -0 0" />
+      <inertia ixx="2.15164e-09" ixy="0" ixz="0" iyy="4.29868e-09" iyz="0" izz="2.15164e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 -0.002 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Bottom_spacer__Chamfer1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="bottom_support__mirror1">
+    <inertial>
+      <mass value="0.000181299" />
+      <origin xyz="0.0159434 0.00784523 1.00558e-17" rpy="0 -0 0" />
+      <inertia ixx="1.59072e-07" ixy="5.14541e-09" ixz="0" iyy="5.01141e-07" iyz="0" izz="3.51197e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0.012 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Bottom_support__Mirror1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="bottom_tube__cut_extrude1">
+    <inertial>
+      <mass value="9.82053e-05" />
+      <origin xyz="6.9215e-17 -0.0248436 -8.14501e-17" rpy="0 -0 0" />
+      <inertia ixx="6.38446e-08" ixy="0" ixz="0" iyy="7.38594e-08" iyz="0" izz="6.38446e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0 -0.048 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Bottom_Tube__Cut_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="cuerpo_predeterminado__saliente_extruir1">
+    <inertial>
+      <mass value="2.70606e-05" />
+      <origin xyz="7.49458e-19 -1.50414e-18 -0.008" rpy="0 -0 0" />
+      <inertia ixx="4.28659e-09" ixy="0" ixz="0" iyy="4.28659e-09" iyz="0" izz="7.4186e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="1.00164e-18 2.19109e-19 -0.016" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Cuerpo_Predeterminado__Saliente_Extruir1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.200000_0.200000_0.200000_0.000000_0.000000">
+        <color rgba="0.2 0.2 0.2 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="cuerpo_predeterminado__saliente_extruir1_1">
+    <inertial>
+      <mass value="2.70606e-05" />
+      <origin xyz="7.49458e-19 -1.50414e-18 -0.008" rpy="0 -0 0" />
+      <inertia ixx="4.28659e-09" ixy="0" ixz="0" iyy="4.28659e-09" iyz="0" izz="7.4186e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="1.00164e-18 2.19109e-19 -0.016" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Cuerpo_Predeterminado__Saliente_Extruir1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.200000_0.200000_0.200000_0.000000_0.000000">
+        <color rgba="0.2 0.2 0.2 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="eje_predeterminado__redondeo1">
+    <inertial>
+      <mass value="1.06785e-06" />
+      <origin xyz="-1.31694e-19 -3.7067e-20 0.0273156" rpy="0 -0 0" />
+      <inertia ixx="2.71449e-10" ixy="0" ixz="0" iyy="2.71449e-10" iyz="0" izz="3.41908e-12" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Eje_Predeterminado__Redondeo1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.647059_0.619608_0.588235_0.000000_0.000000">
+        <color rgba="0.647059 0.619608 0.588235 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="eje_predeterminado__redondeo1_1">
+    <inertial>
+      <mass value="1.06785e-06" />
+      <origin xyz="3.73841e-19 -3.7067e-20 0.0273156" rpy="0 -0 0" />
+      <inertia ixx="2.71449e-10" ixy="0" ixz="0" iyy="2.71449e-10" iyz="0" izz="3.41908e-12" />
+    </inertial>
+    <visual>
+      <origin xyz="5.05536e-19 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Eje_Predeterminado__Redondeo1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.647059_0.619608_0.588235_0.000000_0.000000">
+        <color rgba="0.647059 0.619608 0.588235 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="gt2_16t_13x14_____________1__pulley">
+    <inertial>
+      <mass value="1.01699e-06" />
+      <origin xyz="0.00599075 -0.000132879 -0.000132882" rpy="0 -0 0" />
+      <inertia ixx="2.12779e-11" ixy="-4.04164e-13" ixz="-4.04175e-13" iyy="2.88918e-11" iyz="1.79573e-14" izz="2.88918e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/GT2_16T_13x14_____________1__Pulley.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.894118_0.909804_0.929412_0.000000_0.000000">
+        <color rgba="0.894118 0.909804 0.929412 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="gt2_16t_13x14_____________1__pulley_1">
+    <inertial>
+      <mass value="1.01699e-06" />
+      <origin xyz="0.00599075 -0.000131056 -0.00013468" rpy="0.0136256 -0 0" />
+      <inertia ixx="2.12779e-11" ixy="-3.9862e-13" ixz="-4.09644e-13" iyy="2.88913e-11" iyz="1.79507e-14" izz="2.88922e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0.0136256 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/GT2_16T_13x14_____________1__Pulley.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.894118_0.909804_0.929412_0.000000_0.000000">
+        <color rgba="0.894118 0.909804 0.929412 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="gt2_16t_13x14_____________1__pulley_2">
+    <inertial>
+      <mass value="1.01699e-06" />
+      <origin xyz="0.00599075 -0.000132879 -0.000132882" rpy="0 -0 0" />
+      <inertia ixx="2.12779e-11" ixy="-4.04164e-13" ixz="-4.04175e-13" iyy="2.88918e-11" iyz="1.79573e-14" izz="2.88918e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-2.22045e-19 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/GT2_16T_13x14_____________1__Pulley.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.894118_0.909804_0.929412_0.000000_0.000000">
+        <color rgba="0.894118 0.909804 0.929412 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="gt2_16t_13x14_____________1__pulley_3">
+    <inertial>
+      <mass value="1.01699e-06" />
+      <origin xyz="0.00599075 -0.000132882 0.000132879" rpy="-1.5708 0 0" />
+      <inertia ixx="2.12779e-11" ixy="-4.04175e-13" ixz="4.04164e-13" iyy="2.88918e-11" iyz="-1.79573e-14" izz="2.88918e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-4.44089e-19 0 0" rpy="-1.5708 0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/GT2_16T_13x14_____________1__Pulley.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.894118_0.909804_0.929412_0.000000_0.000000">
+        <color rgba="0.894118 0.909804 0.929412 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="gt2_hihna_chamfer_rulla__chamfer3">
+    <inertial>
+      <mass value="1.00482e-06" />
+      <origin xyz="-9.77563e-19 -0.00400684 -8.98816e-19" rpy="0 -0 0" />
+      <inertia ixx="5.28536e-11" ixy="0" ixz="0" iyy="8.74886e-11" iyz="0" izz="5.28536e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 -0.0085 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/GT2_hihna_chamfer_rulla__Chamfer3.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="gt2_hihna_chamfer_rulla__chamfer3_1">
+    <inertial>
+      <mass value="1.00482e-06" />
+      <origin xyz="-9.77563e-19 -0.00400684 -8.98816e-19" rpy="0 -0 0" />
+      <inertia ixx="5.28536e-11" ixy="0" ixz="0" iyy="8.74886e-11" iyz="0" izz="5.28536e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 -0.0085 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/GT2_hihna_chamfer_rulla__Chamfer3.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="htd3m_80t__cut_extrude5">
+    <inertial>
+      <mass value="5.19154e-05" />
+      <origin xyz="-3.09613e-17 7.1992e-16 -0.00610454" rpy="0 -0 0" />
+      <inertia ixx="1.99209e-08" ixy="0" ixz="0" iyy="1.99209e-08" iyz="0" izz="3.84796e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.0124" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/HTD3M_80T__Cut_Extrude5.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="htd80t_2mm_spacer__chamfer1">
+    <inertial>
+      <mass value="7.38201e-06" />
+      <origin xyz="-4.48215e-18 -0.000811389 -2.00004e-18" rpy="0 -0 0" />
+      <inertia ixx="2.9552e-09" ixy="0" ixz="0" iyy="5.90724e-09" iyz="0" izz="2.9552e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 -0.0016 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/HTD80T_2mm_spacer__Chamfer1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="htd_pulley_adapter__fillet1">
+    <inertial>
+      <mass value="2.04878e-06" />
+      <origin xyz="-3.04827e-10 -5.72617e-05 0.0034823" rpy="0 -0 0" />
+      <inertia ixx="2.50855e-10" ixy="0" ixz="0" iyy="2.51343e-10" iyz="-7.23488e-13" izz="3.16032e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.011" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/HTD_pulley_adapter__Fillet1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="j6_kotelo__cut_extrude3">
+    <inertial>
+      <mass value="4.53329e-06" />
+      <origin xyz="0.014 -1.73472e-18 -0.00792783" rpy="0 -0 0" />
+      <inertia ixx="5.57154e-10" ixy="0" ixz="0" iyy="9.83871e-10" iyz="0" izz="8.11497e-10" />
+    </inertial>
+    <visual>
+      <origin xyz="0.025 -0.011 0.01" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/J6_kotelo__Cut_Extrude3.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="motor1_spacer__cut_extrude3">
+    <inertial>
+      <mass value="2.42605e-05" />
+      <origin xyz="5.19554e-17 -5.64285e-18 0.00548377" rpy="0 -0 0" />
+      <inertia ixx="5.07981e-09" ixy="0" ixz="0" iyy="5.07981e-09" iyz="0" izz="9.2617e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.002" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Motor1_spacer__Cut_Extrude3.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="motor_5_adapter__cut_extrude3">
+    <inertial>
+      <mass value="1.56136e-05" />
+      <origin xyz="0.012575 -1.93516e-13 4.34631e-13" rpy="0 -0 0" />
+      <inertia ixx="3.0106e-09" ixy="0" ixz="0" iyy="2.89605e-09" iyz="0" izz="2.66334e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Motor_5_adapter__Cut_Extrude3.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="nema_14_round_stepper__boss_extrude4">
+    <inertial>
+      <mass value="1.37708e-05" />
+      <origin xyz="-2.34945e-19 2.41679e-19 -0.0058829" rpy="0 -0 0" />
+      <inertia ixx="1.30522e-09" ixy="0" ixz="0" iyy="1.38221e-09" iyz="0" izz="2.2712e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.0125" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Nema_14_Round_stepper__Boss_Extrude4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.898039_0.917647_0.929412_0.000000_0.000000">
+        <color rgba="0.898039 0.917647 0.929412 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="nema_14_stepper__chamfer1">
+    <inertial>
+      <mass value="2.526e-05" />
+      <origin xyz="-4.58453e-19 -2.61973e-19 -0.0115672" rpy="0 -0 0" />
+      <inertia ixx="3.41799e-09" ixy="0" ixz="0" iyy="3.41799e-09" iyz="0" izz="4.92213e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.022" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Nema_14_stepper__Chamfer1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.898039_0.917647_0.929412_0.000000_0.000000">
+        <color rgba="0.898039 0.917647 0.929412 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="nema_17_planetary_5_to_1_gearbox__cut_extrude1">
+    <inertial>
+      <mass value="8.78062e-05" />
+      <origin xyz="6.64147e-19 9.75613e-19 -0.00773105" rpy="0 -0 0" />
+      <inertia ixx="3.7353e-08" ixy="0" ixz="0" iyy="3.7353e-08" iyz="0" izz="2.12818e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.035" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Nema_17_planetary_5_to_1_gearbox__Cut_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.250980_0.250980_0.250980_0.000000_0.000000">
+        <color rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="pulley100tbase__cut_extrude7">
+    <inertial>
+      <mass value="2.4643e-05" />
+      <origin xyz="-0.00181827 2.98661e-17 -1.68408e-17" rpy="2.47821 -0 0" />
+      <inertia ixx="1.40518e-08" ixy="0" ixz="0" iyy="7.20346e-09" iyz="0" izz="7.20346e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0063 0 0" rpy="2.47821 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Pulley100TBase__Cut_Extrude7.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="pulley100tv5__cut_extrude7">
+    <inertial>
+      <mass value="3.04349e-05" />
+      <origin xyz="-0.0049735 7.48276e-07 -6.02365e-05" rpy="-0.0245985 0 0" />
+      <inertia ixx="1.58908e-08" ixy="-3.95117e-15" ixz="3.1807e-13" iyy="8.23127e-09" iyz="-6.16636e-13" izz="8.2809e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0096 0 0" rpy="-0.0245985 0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Pulley100Tv5__Cut_Extrude7.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="pulley32tgt2__cut_extrude2">
+    <inertial>
+      <mass value="3.67001e-06" />
+      <origin xyz="3.10896e-12 1.76486e-11 0.00645167" rpy="0 -0 0" />
+      <inertia ixx="1.52789e-10" ixy="0" ixz="0" iyy="1.54639e-10" iyz="0" izz="1.84538e-10" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Pulley32TGT2__Cut_Extrude2.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.752941_0.752941_0.752941_0.000000_0.000000">
+        <color rgba="0.752941 0.752941 0.752941 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="pulley60tv2__cut_extrude3">
+    <inertial>
+      <mass value="8.77344e-06" />
+      <origin xyz="-1.69691e-07 -4.68653e-08 0.0050893" rpy="0 -0 0" />
+      <inertia ixx="9.78923e-10" ixy="2.81744e-14" ixz="0" iyy="9.78914e-10" iyz="0" izz="1.80356e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -1.75554e-18" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Pulley60Tv2__Cut_Extrude3.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.752941_0.752941_0.752941_0.000000_0.000000">
+        <color rgba="0.752941 0.752941 0.752941 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="root">
+    <visual>
+      <origin xyz="-0.302909 0.104842 0.12213" rpy="-0.0109728 -0.663384 -1.5708" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Nema8_Stepperi__banggood_com___Cut_Extrude1.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.792157_0.819608_0.933333_0.000000_0.000000">
+        <color rgba="0.792157 0.819608 0.933333 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="rotation_arm_v3__cut_extrude6">
+    <inertial>
+      <mass value="7.51509e-05" />
+      <origin xyz="0.000880649 9.79058e-05 0.0418273" rpy="0 -0 0.123466" />
+      <inertia ixx="8.07685e-08" ixy="-8.99634e-10" ixz="-8.97583e-10" iyy="8.78077e-08" iyz="-1.44593e-10" izz="2.58424e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0.123466" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Rotation_arm_V3__Cut_Extrude6.stl" scale="1 1 1" />
+      </geometry>
+      <material name="1.000000_0.000000_0.000000_0.000000_0.000000">
+        <color rgba="1 0 0 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m3_x_16___16n__hex">
+    <inertial>
+      <mass value="1.75316e-07" />
+      <origin xyz="-0.0113693 1.42e-19 1.42549e-20" rpy="0 -0 0" />
+      <inertia ixx="3.88151e-13" ixy="0" ixz="0" iyy="6.16606e-12" iyz="0" izz="6.16606e-12" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.019 1.32785e-19 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M3_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m3_x_16___16n__hex_1">
+    <inertial>
+      <mass value="1.75316e-07" />
+      <origin xyz="-0.0113693 9.21526e-21 1.42549e-20" rpy="0 -0 0" />
+      <inertia ixx="3.88151e-13" ixy="0" ixz="0" iyy="6.16606e-12" iyz="0" izz="6.16606e-12" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.019 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M3_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m3_x_16___16n__hex_2">
+    <inertial>
+      <mass value="1.75316e-07" />
+      <origin xyz="-0.0113693 9.21526e-21 1.42549e-20" rpy="0 -0 0" />
+      <inertia ixx="3.88151e-13" ixy="0" ixz="0" iyy="6.16606e-12" iyz="0" izz="6.16606e-12" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.019 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M3_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m3_x_16___16n__hex_3">
+    <inertial>
+      <mass value="1.75316e-07" />
+      <origin xyz="-0.0113693 9.21526e-21 1.42549e-20" rpy="0 -0 0" />
+      <inertia ixx="3.88151e-13" ixy="0" ixz="0" iyy="6.16606e-12" iyz="0" izz="6.16606e-12" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.019 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M3_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m3_x_25___18n__hex">
+    <inertial>
+      <mass value="2.38934e-07" />
+      <origin xyz="0.0088429 4.39507e-20 3.1484e-20" rpy="0 -0 0" />
+      <inertia ixx="4.5972e-13" ixy="0" ixz="0" iyy="1.83143e-11" iyz="0" izz="1.83143e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.003 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M3_x_25___18N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m3_x_25___18n__hex_1">
+    <inertial>
+      <mass value="2.38934e-07" />
+      <origin xyz="0.0088429 4.39507e-20 3.1484e-20" rpy="0 -0 0" />
+      <inertia ixx="4.5972e-13" ixy="0" ixz="0" iyy="1.83143e-11" iyz="0" izz="1.83143e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.003 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M3_x_25___18N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m4_x_16___16n__hex">
+    <inertial>
+      <mass value="3.35506e-07" />
+      <origin xyz="0.0039942 3.25037e-19 -1.95624e-20" rpy="0 -0 0" />
+      <inertia ixx="1.31714e-12" ixy="0" ixz="0" iyy="1.2897e-11" iyz="0" izz="1.2897e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.004 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M4_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m4_x_16___16n__hex_1">
+    <inertial>
+      <mass value="3.35506e-07" />
+      <origin xyz="0.0039942 3.25037e-19 -1.95624e-20" rpy="0 -0 0" />
+      <inertia ixx="1.31714e-12" ixy="0" ixz="0" iyy="1.2897e-11" iyz="0" izz="1.2897e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.004 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M4_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m6_x_12___12n__hex">
+    <inertial>
+      <mass value="7.30387e-07" />
+      <origin xyz="0.00126209 3.53914e-19 -1.07833e-20" rpy="0 -0 0" />
+      <inertia ixx="7.12312e-12" ixy="0" ixz="0" iyy="2.24586e-11" iyz="0" izz="2.24586e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.006 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M6_x_12___12N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_1">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0061387 -4.81876e-17 0.004" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0158548 -4.84515e-17 0.004" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_10">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0061387 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0158548 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_11">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.0015989 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.00811716 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_12">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_13">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -2.28677e-18" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 -2.20854e-18" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_14">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00131605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0084 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_15">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0142839 6.48531e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.024 3.84632e-19 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_16">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0142839 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.024 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_17">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0135934 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0233095 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_18">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0061387 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0158548 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_19">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_2">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0142839 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.024 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_20">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_21">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_22">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_23">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0142839 6.48531e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.024 3.84632e-19 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_24">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0142839 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.024 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_25">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00131605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0084 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_26">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0061387 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0158548 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_3">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_4">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_5">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_6">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0142839 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.024 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_7">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_8">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="-0.0142839 6.48531e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.024 3.84632e-19 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_9">
+    <inertial>
+      <mass value="1.71416e-06" />
+      <origin xyz="0.00171605 2.63899e-19 -7.82271e-20" rpy="0 -0 0" />
+      <inertia ixx="2.80313e-11" ixy="0" ixz="0" iyy="9.37363e-11" iyz="0" izz="9.37363e-11" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_16___16N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_40___28n__hex">
+    <inertial>
+      <mass value="2.92053e-06" />
+      <origin xyz="0.0121267 1.23913e-19 -2.68294e-19" rpy="0 -0 0" />
+      <inertia ixx="3.76823e-11" ixy="0" ixz="0" iyy="6.41504e-10" iyz="0" izz="6.41504e-10" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.0084 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_40___28N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="socket_head_cap_screw_iso_iso_4762_m8_x_50___28n__hex">
+    <inertial>
+      <mass value="3.42318e-06" />
+      <origin xyz="0.0172785 2.79397e-19 -1.73679e-19" rpy="0 -0 0" />
+      <inertia ixx="4.17035e-11" ixy="0" ixz="0" iyy="1.09683e-09" iyz="0" izz="1.09683e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="-0.008 0 0" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/socket_head_cap_screw_iso_ISO_4762_M8_x_50___28N__Hex.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="tapa_predeterminado__redondeo4">
+    <inertial>
+      <mass value="1.4063e-05" />
+      <origin xyz="8.38103e-17 3.32008e-17 0.00591132" rpy="0 -0 0" />
+      <inertia ixx="2.14447e-09" ixy="0" ixz="0" iyy="2.14447e-09" iyz="0" izz="4.11108e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.002" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Tapa_Predeterminado__Redondeo4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <link name="tapa_predeterminado__redondeo4_1">
+    <inertial>
+      <mass value="1.4063e-05" />
+      <origin xyz="8.38103e-17 3.32008e-17 0.00541132" rpy="0 -0 0" />
+      <inertia ixx="2.14447e-09" ixy="0" ixz="0" iyy="2.14447e-09" iyz="0" izz="4.11108e-09" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0.0015" rpy="0 -0 0" />
+      <geometry>
+        <mesh filename="package://nexus_moveit_config/meshes/Tapa_Predeterminado__Redondeo4.stl" scale="1 1 1" />
+      </geometry>
+      <material name="0.776471_0.756863_0.737255_0.000000_0.000000">
+        <color rgba="0.776471 0.756863 0.737255 1" />
+      </material>
+    </visual>
+  </link>
+  <joint name="base_shoulder_joint" type="revolute">
+    <origin xyz="1.49119e-16 0.012 -9.6842e-19" rpy="1.5708 -2.77556e-16 -1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="baseplate__fillet1" />
+    <child link="pulley100tbase__cut_extrude7" />
+    <limit lower="-3.141593" upper="3.141593" effort="10.0" velocity="1.0" />
+  </joint>
+  <joint name="fastened_1" type="fixed">
+    <origin xyz="-0.03 0.02 -2.77556e-16" rpy="3.14159 -1.65435e-24 1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="bottom_support__mirror1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m3_x_16___16n__hex_3" />
+  </joint>
+  <joint name="fastened_10" type="fixed">
+    <origin xyz="-0.0155 -0.0155 0.0065" rpy="0 -1.5708 -1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="tapa_predeterminado__redondeo4" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_6" />
+  </joint>
+  <joint name="fastened_11" type="fixed">
+    <origin xyz="-0.0155 0.0155 0.0065" rpy="0 -1.5708 -1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="tapa_predeterminado__redondeo4" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_23" />
+  </joint>
+  <joint name="fastened_12" type="fixed">
+    <origin xyz="0.0155 -0.0155 0.0065" rpy="0 -1.5708 -1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="tapa_predeterminado__redondeo4" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_16" />
+  </joint>
+  <joint name="fastened_13" type="fixed">
+    <origin xyz="0.0155 0.0155 0.0065" rpy="0 -1.5708 -1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="tapa_predeterminado__redondeo4" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_24" />
+  </joint>
+  <joint name="fastened_14" type="fixed">
+    <origin xyz="2.77556e-17 -0.048 -5.55112e-17" rpy="0 -1.5708 3.14159" />
+    <axis xyz="0 -1 0" />
+    <parent link="bottom_tube__cut_extrude1" />
+    <child link="baseplate__fillet1" />
+  </joint>
+  <joint name="fastened_15" type="fixed">
+    <origin xyz="0.026 0 0" rpy="0 -1.5708 8.02136e-15" />
+    <axis xyz="0 0 1" />
+    <parent link="motor_5_adapter__cut_extrude3" />
+    <child link="nema_14_round_stepper__boss_extrude4" />
+  </joint>
+  <joint name="fastened_17" type="fixed">
+    <origin xyz="0.003 -0.0153947 -0.0196978" rpy="2.23418 -1.29869e-17 3.14159" />
+    <axis xyz="1 0 0" />
+    <parent link="pulley100tbase__cut_extrude7" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_50___28n__hex" />
+  </joint>
+  <joint name="fastened_18" type="fixed">
+    <origin xyz="-0.0063 -5.85483e-32 -9.24446e-32" rpy="0 0.907413 -1.5708" />
+    <axis xyz="0 1 0" />
+    <parent link="pulley100tbase__cut_extrude7" />
+    <child link="bottom_spacer__chamfer1" />
+  </joint>
+  <joint name="fastened_19" type="fixed">
+    <origin xyz="1.71933e-17 -0.002 1.61943e-17" rpy="0 1.5708 -3.14159" />
+    <axis xyz="0 -1 -1.91418e-16" />
+    <parent link="bottom_spacer__chamfer1" />
+    <child link="basewall_2_v2__cut_extrude11" />
+  </joint>
+  <joint name="fastened_2" type="fixed">
+    <origin xyz="2.77556e-16 0.02 -0.03" rpy="3.14159 -1.65435e-24 1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="bottom_support__mirror1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m3_x_16___16n__hex_2" />
+  </joint>
+  <joint name="fastened_20" type="fixed">
+    <origin xyz="0.01 0.04 0.0475" rpy="0 1.5708 7.40028e-18" />
+    <axis xyz="0 0 -1" />
+    <parent link="basewall_2_v2__cut_extrude11" />
+    <child link="nema_17_planetary_5_to_1_gearbox__cut_extrude1" />
+  </joint>
+  <joint name="fastened_21" type="fixed">
+    <origin xyz="0.02 0.0575 0.065" rpy="-3.14159 -5.55112e-17 3.14159" />
+    <axis xyz="-1 0 0" />
+    <parent link="basewall_2_v2__cut_extrude11" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_26" />
+  </joint>
+  <joint name="fastened_22" type="fixed">
+    <origin xyz="0.02 0.0225 0.065" rpy="3.14159 -5.55112e-17 -3.14159" />
+    <axis xyz="-1 0 0" />
+    <parent link="basewall_2_v2__cut_extrude11" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_18" />
+  </joint>
+  <joint name="fastened_23" type="fixed">
+    <origin xyz="0.02 0.0575 0.03" rpy="-3.14159 -3.05311e-15 3.14159" />
+    <axis xyz="-1 7.87785e-16 -3.02511e-15" />
+    <parent link="basewall_2_v2__cut_extrude11" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_1" />
+  </joint>
+  <joint name="fastened_24" type="fixed">
+    <origin xyz="0.02 0.0225 0.03" rpy="3.14159 -5.55112e-17 -3.14159" />
+    <axis xyz="-1 0 0" />
+    <parent link="basewall_2_v2__cut_extrude11" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_10" />
+  </joint>
+  <joint name="fastened_25" type="fixed">
+    <origin xyz="2.77556e-17 0 0.0273" rpy="4.61383e-19 -5.55112e-17 3.46945e-18" />
+    <axis xyz="0 0 -1" />
+    <parent link="nema_17_planetary_5_to_1_gearbox__cut_extrude1" />
+    <child link="motor1_spacer__cut_extrude3" />
+  </joint>
+  <joint name="fastened_26" type="fixed">
+    <origin xyz="0 0 0.004" rpy="-8.92253e-16 5.55112e-17 -3.14159" />
+    <axis xyz="0 0 -1" />
+    <parent link="htd_pulley_adapter__fillet1" />
+    <child link="3m_htd_16t_6mm_bore__cut_extrude1" />
+  </joint>
+  <joint name="fastened_27" type="fixed">
+    <origin xyz="0.00989949 0.00989949 0.013" rpy="0 1.5708 -1.38778e-17" />
+    <axis xyz="1 0 0" />
+    <parent link="motor1_spacer__cut_extrude3" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_20" />
+  </joint>
+  <joint name="fastened_28" type="fixed">
+    <origin xyz="0.00989949 -0.00989949 0.013" rpy="0 1.5708 2.46519e-32" />
+    <axis xyz="1 0 0" />
+    <parent link="motor1_spacer__cut_extrude3" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_21" />
+  </joint>
+  <joint name="fastened_29" type="fixed">
+    <origin xyz="-0.00989949 -0.00989949 0.013" rpy="0 1.5708 3.81639e-17" />
+    <axis xyz="-1 0 0" />
+    <parent link="motor1_spacer__cut_extrude3" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_25" />
+  </joint>
+  <joint name="fastened_3" type="fixed">
+    <origin xyz="-1.11155e-16 0.02 0.03" rpy="3.14159 -1.65435e-24 1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="bottom_support__mirror1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m3_x_16___16n__hex" />
+  </joint>
+  <joint name="fastened_30" type="fixed">
+    <origin xyz="-0.00989949 0.00989949 0.013" rpy="0 1.5708 2.46519e-32" />
+    <axis xyz="-1 0 0" />
+    <parent link="motor1_spacer__cut_extrude3" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_14" />
+  </joint>
+  <joint name="fastened_31" type="fixed">
+    <origin xyz="0.02 0.0385 0.0765" rpy="0 1.5708 -3.30872e-24" />
+    <axis xyz="0 0 1" />
+    <parent link="basewall_2_v2__cut_extrude11" />
+    <child link="basewall_cover_v2__chamfer4" />
+  </joint>
+  <joint name="fastened_32" type="fixed">
+    <origin xyz="0 0 0.0222" rpy="0 1.5708 2.46519e-32" />
+    <axis xyz="1 0 0" />
+    <parent link="basewall_cover_v2__chamfer4" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_13" />
+  </joint>
+  <joint name="fastened_33" type="fixed">
+    <origin xyz="0.01 0.055 0.0125" rpy="3.69779e-32 5.55112e-17 1.02634e-48" />
+    <axis xyz="-1 0 0" />
+    <parent link="basewall_2_v2__cut_extrude11" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_40___28n__hex" />
+  </joint>
+  <joint name="fastened_34" type="fixed">
+    <origin xyz="-1.38778e-16 -1.45717e-16 -0.0124" rpy="1.5708 -0 -1.5708" />
+    <axis xyz="0 1 0" />
+    <parent link="htd3m_80t__cut_extrude5" />
+    <child link="htd80t_2mm_spacer__chamfer1" />
+  </joint>
+  <joint name="fastened_35" type="fixed">
+    <origin xyz="4.16334e-16 1.52656e-16 -2.58474e-16" rpy="3.14159 -1.70437e-16 6.76542e-17" />
+    <axis xyz="0 0 -1" />
+    <parent link="htd3m_80t__cut_extrude5" />
+    <child link="90mm_aluputki__boss_extrude1" />
+  </joint>
+  <joint name="fastened_36" type="fixed">
+    <origin xyz="0.0016 -1.11022e-16 -8.32667e-17" rpy="-1.5708 -0.0136256 1.5708" />
+    <axis xyz="-0 -0 1" />
+    <parent link="15mm_1_6_rikka__boss_extrude1" />
+    <child link="htd3m_80t__cut_extrude5" />
+  </joint>
+  <joint name="fastened_37" type="fixed">
+    <origin xyz="0.0173205 -0.01 8.84709e-17" rpy="0 1.5708 1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="htd3m_80t__cut_extrude5" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex" />
+  </joint>
+  <joint name="fastened_38" type="fixed">
+    <origin xyz="-3.05311e-16 0.02 4.33681e-17" rpy="0 1.5708 1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="htd3m_80t__cut_extrude5" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_11" />
+  </joint>
+  <joint name="fastened_39" type="fixed">
+    <origin xyz="-0.0173205 -0.01 8.67362e-17" rpy="0 1.5708 1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="htd3m_80t__cut_extrude5" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_19" />
+  </joint>
+  <joint name="fastened_4" type="fixed">
+    <origin xyz="0.03 0.02 -2.77556e-17" rpy="3.14159 -1.65435e-24 1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="bottom_support__mirror1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m3_x_16___16n__hex_1" />
+  </joint>
+  <joint name="fastened_40" type="fixed">
+    <origin xyz="-1.59595e-16 1.94289e-16 -0.0025" rpy="2.48933e-16 -1.66533e-16 -3.14159" />
+    <axis xyz="0 0 -1" />
+    <parent link="base_predeterminado__cortar_extruir5_1" />
+    <child link="eje_predeterminado__redondeo1_1" />
+  </joint>
+  <joint name="fastened_41" type="fixed">
+    <origin xyz="-1.80411e-16 -4.71845e-16 -0.016" rpy="1.7087e-16 5.70594e-33 -6.67869e-17" />
+    <axis xyz="-0 -0 1" />
+    <parent link="cuerpo_predeterminado__saliente_extruir1_1" />
+    <child link="base_predeterminado__cortar_extruir5_1" />
+  </joint>
+  <joint name="fastened_42" type="fixed">
+    <origin xyz="-1.59595e-16 2.498e-16 0.0095" rpy="3.14159 1.11022e-16 3.14159" />
+    <axis xyz="-0 -0 1" />
+    <parent link="tapa_predeterminado__redondeo4_1" />
+    <child link="cuerpo_predeterminado__saliente_extruir1_1" />
+  </joint>
+  <joint name="fastened_43" type="fixed">
+    <origin xyz="0.0155 -0.0155 0.0015" rpy="0 -1.5708 -3.43475e-16" />
+    <axis xyz="1 0 0" />
+    <parent link="tapa_predeterminado__redondeo4_1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_15" />
+  </joint>
+  <joint name="fastened_44" type="fixed">
+    <origin xyz="-0.0155 0.0155 0.0015" rpy="0 -1.5708 -3.43475e-16" />
+    <axis xyz="1 0 0" />
+    <parent link="tapa_predeterminado__redondeo4_1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_8" />
+  </joint>
+  <joint name="fastened_45" type="fixed">
+    <origin xyz="-0.0155 -0.0155 0.0015" rpy="0 -1.5708 -3.43475e-16" />
+    <axis xyz="1 0 0" />
+    <parent link="tapa_predeterminado__redondeo4_1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_2" />
+  </joint>
+  <joint name="fastened_46" type="fixed">
+    <origin xyz="0.0155 0.0155 0.0015" rpy="0 -1.5708 1.5708" />
+    <axis xyz="-1 0 0" />
+    <parent link="tapa_predeterminado__redondeo4_1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_17" />
+  </joint>
+  <joint name="fastened_47" type="fixed">
+    <origin xyz="-9.71445e-17 0.0857 0.0048" rpy="-6.93889e-18 8.32667e-17 5.89806e-17" />
+    <axis xyz="-0 -0 -1" />
+    <parent link="arm1v2__fillet6" />
+    <child link="tapa_predeterminado__redondeo4_1" />
+  </joint>
+  <joint name="fastened_48" type="fixed">
+    <origin xyz="-0.012 0.115 7.28584e-17" rpy="0 1.5708 -4.0766e-17" />
+    <axis xyz="-1 0 0" />
+    <parent link="arm1v2__fillet6" />
+    <child link="arm_4_3__fillet1" />
+  </joint>
+  <joint name="fastened_49" type="fixed">
+    <origin xyz="0.012 -0.067 4.51028e-17" rpy="3.14159 2.77556e-17 -3.14159" />
+    <axis xyz="1 0 0" />
+    <parent link="arm_4_3__fillet1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m3_x_25___18n__hex" />
+  </joint>
+  <joint name="fastened_5" type="fixed">
+    <origin xyz="-1.11022e-16 0.02 -2.77556e-17" rpy="0 -1.5708 3.14159" />
+    <axis xyz="0 1 0" />
+    <parent link="bottom_support__mirror1" />
+    <child link="bottom_tube__cut_extrude1" />
+  </joint>
+  <joint name="fastened_50" type="fixed">
+    <origin xyz="0.012 -0.067 0.024" rpy="1.5708 -8.63025e-17 3.14159" />
+    <axis xyz="1 0 0" />
+    <parent link="arm_4_3__fillet1" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m3_x_25___18n__hex_1" />
+  </joint>
+  <joint name="fastened_51" type="fixed">
+    <origin xyz="-6.93889e-18 -0.0016 0" rpy="1.5708 2.09034e-16 -4.0766e-17" />
+    <axis xyz="-0 -0 -1" />
+    <parent link="htd80t_2mm_spacer__chamfer1" />
+    <child link="arm1v2__fillet6" />
+  </joint>
+  <joint name="fastened_52" type="fixed">
+    <origin xyz="0.002 7.49401e-16 -2.39392e-16" rpy="3.14159 9.4585e-34 -3.14159" />
+    <axis xyz="1 0 0" />
+    <parent link="arm_4_3__fillet1" />
+    <child link="arm_2_3__chamfer6" />
+  </joint>
+  <joint name="fastened_53" type="fixed">
+    <origin xyz="-0.0096 -1.38778e-17 5.55112e-17" rpy="1.59539 -9.76218e-16 3.14159" />
+    <axis xyz="-1 0 0" />
+    <parent link="pulley100tv5__cut_extrude7" />
+    <child link="arm2mountv2__cut_extrude12" />
+  </joint>
+  <joint name="fastened_54" type="fixed">
+    <origin xyz="0 -6.93889e-18 0" rpy="-1.5462 -5.70425e-17 -3.14159" />
+    <axis xyz="1 0 0" />
+    <parent link="pulley100tv5__cut_extrude7" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m6_x_12___12n__hex" />
+  </joint>
+  <joint name="fastened_55" type="fixed">
+    <origin xyz="-3.46945e-18 0.0199939 -0.000491919" rpy="1.59539 -2.61879e-19 -3.14159" />
+    <axis xyz="1 0 0" />
+    <parent link="pulley100tv5__cut_extrude7" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m4_x_16___16n__hex" />
+  </joint>
+  <joint name="fastened_56" type="fixed">
+    <origin xyz="-6.93889e-18 0.000491919 0.0199939" rpy="1.59539 -4.44319e-18 -3.14159" />
+    <axis xyz="1 0 0" />
+    <parent link="pulley100tv5__cut_extrude7" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m4_x_16___16n__hex_1" />
+  </joint>
+  <joint name="fastened_57" type="fixed">
+    <origin xyz="0.015 -0.0138291 -0.043" rpy="0 -1.5708 1.5708" />
+    <axis xyz="1 0 0" />
+    <parent link="arm2mountv2__cut_extrude12" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_22" />
+  </joint>
+  <joint name="fastened_58" type="fixed">
+    <origin xyz="0.041 -0.0138291 -0.043" rpy="0 -1.5708 -4.71239" />
+    <axis xyz="1 0 0" />
+    <parent link="arm2mountv2__cut_extrude12" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_12" />
+  </joint>
+  <joint name="fastened_59" type="fixed">
+    <origin xyz="0.028 -0.0268291 -0.035" rpy="3.14159 1.38778e-16 3.14159" />
+    <axis xyz="0 0 1" />
+    <parent link="arm2mountv2__cut_extrude12" />
+    <child link="nema_14_stepper__chamfer1" />
+  </joint>
+  <joint name="fastened_6" type="fixed">
+    <origin xyz="-1.52656e-16 -6.28814e-17 -2.08167e-17" rpy="-1.65436e-24 1.65436e-24 1.5708" />
+    <axis xyz="0 0 -1" />
+    <parent link="base_predeterminado__cortar_extruir5" />
+    <child link="eje_predeterminado__redondeo1" />
+  </joint>
+  <joint name="fastened_60" type="fixed">
+    <origin xyz="0.041 -0.0398291 -0.04" rpy="0 -1.5708 3.14159" />
+    <axis xyz="1 0 0" />
+    <parent link="arm2mountv2__cut_extrude12" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_9" />
+  </joint>
+  <joint name="fastened_61" type="fixed">
+    <origin xyz="0.015 -0.0398291 -0.043" rpy="0 -1.5708 -4.71239" />
+    <axis xyz="1 0 0" />
+    <parent link="arm2mountv2__cut_extrude12" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_5" />
+  </joint>
+  <joint name="fastened_62" type="fixed">
+    <origin xyz="-1.73472e-18 -5.55112e-17 3.03577e-18" rpy="0 -1.5708 5.46438e-17" />
+    <axis xyz="-1 0 0" />
+    <parent link="nema_14_stepper__chamfer1" />
+    <child link="gt2_16t_13x14_____________1__pulley_2" />
+  </joint>
+  <joint name="fastened_64" type="fixed">
+    <origin xyz="0.02 0 -0.02195" rpy="1.5708 9.02056e-17 2.84495e-16" />
+    <axis xyz="1 0 0" />
+    <parent link="motor_5_adapter__cut_extrude3" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_4" />
+  </joint>
+  <joint name="fastened_66" type="fixed">
+    <origin xyz="5.55112e-17 0 0.01" rpy="0 -1.5708 2.20657e-15" />
+    <axis xyz="-1 -0 -0" />
+    <parent link="pulley60tv2__cut_extrude3" />
+    <child link="motor_5_adapter__cut_extrude3" />
+  </joint>
+  <joint name="fastened_67" type="fixed">
+    <origin xyz="0 1.04083e-17 0.0012" rpy="2.92836e-16 1.47759e-16 2.92452" />
+    <axis xyz="-0 -0 -1" />
+    <parent link="15mm_rikka_1_2mm__boss_extrude1" />
+    <child link="pulley60tv2__cut_extrude3" />
+  </joint>
+  <joint name="fastened_68" type="fixed">
+    <origin xyz="0.024 0 0" rpy="-1.5708 4.996e-16 1.5708" />
+    <axis xyz="0 0 -1" />
+    <parent link="motor_5_adapter__cut_extrude3" />
+    <child link="6mm_akseli__boss_extrude1" />
+  </joint>
+  <joint name="fastened_7" type="fixed">
+    <origin xyz="-6.93889e-17 7.58932e-18 -0.016" rpy="8.74552e-47 -1.47911e-31 -1.65436e-24" />
+    <axis xyz="-0 -0 1" />
+    <parent link="cuerpo_predeterminado__saliente_extruir1" />
+    <child link="base_predeterminado__cortar_extruir5" />
+  </joint>
+  <joint name="fastened_70" type="fixed">
+    <origin xyz="1.66533e-16 -2.60209e-17 0.041" rpy="0 -1.5708 1.69426" />
+    <axis xyz="1 0 0" />
+    <parent link="rotation_arm_v3__cut_extrude6" />
+    <child link="100mm_aluputki__boss_extrude1" />
+  </joint>
+  <joint name="fastened_71" type="fixed">
+    <origin xyz="0.0025 -5.55112e-17 0.17" rpy="0 -1.5708 -4.30211e-16" />
+    <axis xyz="-1 0 0" />
+    <parent link="6mm_akseli__boss_extrude1" />
+    <child link="gt2_16t_13x14_____________1__pulley" />
+  </joint>
+  <joint name="fastened_73" type="fixed">
+    <origin xyz="-2.77556e-17 -0.003 3.46945e-17" rpy="0 1.5708 4.85723e-17" />
+    <axis xyz="0 -1 0" />
+    <parent link="bearing_adapter_j6_housing__boss_extrude2" />
+    <child link="5mm_akseli_2__boss_extrude1" />
+  </joint>
+  <joint name="fastened_74" type="fixed">
+    <origin xyz="0.028 2.77556e-17 8.32667e-17" rpy="0 -1.5708 1.5708" />
+    <axis xyz="-0 1 -0" />
+    <parent link="j6_kotelo__cut_extrude3" />
+    <child link="bearing_adapter_j6_housing__boss_extrude2" />
+  </joint>
+  <joint name="fastened_75" type="fixed">
+    <origin xyz="-0.0228249 -0.00283251 0.103" rpy="0 1.5708 -1.44733" />
+    <axis xyz="0 -1 0" />
+    <parent link="rotation_arm_v3__cut_extrude6" />
+    <child link="bearing_adapter_j6_housing__boss_extrude2_1" />
+  </joint>
+  <joint name="fastened_76" type="fixed">
+    <origin xyz="0.0009 0 6.93889e-18" rpy="1.5708 1.73472e-16 3.53884e-16" />
+    <axis xyz="0 0 -1" />
+    <parent link="bearing_adapter_j6_housing__boss_extrude2_1" />
+    <child link="pulley32tgt2__cut_extrude2" />
+  </joint>
+  <joint name="fastened_77" type="fixed">
+    <origin xyz="-2.77556e-17 2.08167e-17 0.015" rpy="-1.5708 -1.11022e-16 -1.5708" />
+    <axis xyz="0 -1 0" />
+    <parent link="pulley32tgt2__cut_extrude2" />
+    <child link="5mm_akseli_1__cut_extrude1" />
+  </joint>
+  <joint name="fastened_79" type="fixed">
+    <origin xyz="-0.0176926 -0.0198298 0.063" rpy="-1.5708 -3.33067e-16 1.69426" />
+    <axis xyz="1 0 0" />
+    <parent link="rotation_arm_v3__cut_extrude6" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_3" />
+  </joint>
+  <joint name="fastened_8" type="fixed">
+    <origin xyz="0 8.30476e-17 0.01" rpy="3.14159 -1.47911e-31 3.14159" />
+    <axis xyz="-0 -0 1" />
+    <parent link="tapa_predeterminado__redondeo4" />
+    <child link="cuerpo_predeterminado__saliente_extruir1" />
+  </joint>
+  <joint name="fastened_80" type="fixed">
+    <origin xyz="-0.0183083 -0.0148679 0.063" rpy="-8.63805e-16 -9.03044e-16 -3.01813" />
+    <axis xyz="0 1 0" />
+    <parent link="rotation_arm_v3__cut_extrude6" />
+    <child link="gt2_hihna_chamfer_rulla__chamfer3" />
+  </joint>
+  <joint name="fastened_81" type="fixed">
+    <origin xyz="-0.0194847 0.0101779 0.0586876" rpy="3.14159 -8.03597e-16 -3.01813" />
+    <axis xyz="0 1 0" />
+    <parent link="rotation_arm_v3__cut_extrude6" />
+    <child link="gt2_hihna_chamfer_rulla__chamfer3_1" />
+  </joint>
+  <joint name="fastened_82" type="fixed">
+    <origin xyz="-0.0220029 0.0149037 0.063" rpy="1.5708 1.44329e-15 -1.44733" />
+    <axis xyz="1 0 0" />
+    <parent link="rotation_arm_v3__cut_extrude6" />
+    <child link="socket_head_cap_screw_iso_iso_4762_m8_x_16___16n__hex_7" />
+  </joint>
+  <joint name="fastened_83" type="fixed">
+    <origin xyz="3.46945e-18 -2.77556e-17 -6.34362e-25" rpy="0 -1.5708 -4.71239" />
+    <axis xyz="0 -1 0" />
+    <parent link="root" />
+    <child link="bottom_support__mirror1" />
+  </joint>
+  <joint name="fastened_9" type="fixed">
+    <origin xyz="0.0773 0.002 9.7375e-31" rpy="-1.5708 1.26711e-29 -3.14159" />
+    <axis xyz="-0 -0 -1" />
+    <parent link="baseplate__fillet1" />
+    <child link="tapa_predeterminado__redondeo4" />
+  </joint>
+  <joint name="forearm_wrist" type="revolute">
+    <origin xyz="0.0244 0.015 0.035" rpy="8.2833e-16 -9.92262e-16 1.5708" />
+    <axis xyz="0 0 -1" />
+    <parent link="arm2mountv2__cut_extrude12" />
+    <child link="rotation_arm_v3__cut_extrude6" />
+    <limit lower="-3.141593" upper="3.141593" effort="10.0" velocity="1.0" />
+  </joint>
+  <joint name="revolute_1" type="fixed">
+    <origin xyz="-1.25318e-25 2.77556e-17 0.037875" rpy="0 -1.5708 -1.90463e-19" />
+    <parent link="eje_predeterminado__redondeo1" />
+    <child link="gt2_16t_13x14_____________1__pulley_3" />
+  </joint>
+  <joint name="revolute_2" type="fixed">
+    <origin xyz="0 0 0.0283" rpy="-5.35058e-27 5.55112e-17 9.84511e-16" />
+    <parent link="nema_17_planetary_5_to_1_gearbox__cut_extrude1" />
+    <child link="htd_pulley_adapter__fillet1" />
+  </joint>
+  <joint name="revolute_3" type="revolute">
+    <origin xyz="0 0.16 1.04083e-17" rpy="0 -1.5708 4.71239" />
+    <axis xyz="1 0 0" />
+    <parent link="arm1v2__fillet6" />
+    <child link="pulley100tv5__cut_extrude7" />
+    <limit lower="-1.570796" upper="1.570796" effort="10.0" velocity="1.0" />
+  </joint>
+  <joint name="revolute_4" type="fixed">
+    <origin xyz="2.08167e-17 -2.77556e-17 0.037875" rpy="0 -1.5708 3.14159" />
+    <parent link="eje_predeterminado__redondeo1_1" />
+    <child link="gt2_16t_13x14_____________1__pulley_1" />
+  </joint>
+  <joint name="revolute_5" type="fixed">
+    <origin xyz="0.0244 0.015 -0.043" rpy="3.14159 7.48967e-16 -1.5708" />
+    <parent link="arm2mountv2__cut_extrude12" />
+    <child link="15mm_rikka_1_2mm__boss_extrude1" />
+  </joint>
+  <joint name="shoulder_upperarm_joint" type="revolute">
+    <origin xyz="0.011 0.04 -0.0375" rpy="-3.14159 4.44089e-16 -1.02341e-15" />
+    <axis xyz="-1 0 0" />
+    <parent link="basewall_2_v2__cut_extrude11" />
+    <child link="15mm_1_6_rikka__boss_extrude1" />
+    <limit lower="-0.785398" upper="1.570796" effort="10.0" velocity="1.0" />
+  </joint>
+  <joint name="wrist_tool" type="revolute">
+    <origin xyz="-0.0148858 -0.00184729 0.103" rpy="-3.14159 8.45311e-16 0.123466" />
+    <axis xyz="-1 0 0" />
+    <parent link="rotation_arm_v3__cut_extrude6" />
+    <child link="j6_kotelo__cut_extrude3" />
+    <limit lower="-0.785398" upper="1.570796" effort="10.0" velocity="1.0" />
+  </joint>
+  <link name="base_link" />
+  <joint name="base_link_to_root" type="fixed">
+    <parent link="base_link" />
+    <child link="root" />
+    <origin xyz="0 0 0" rpy="0 1.5707963 0" />
+  </joint>
+  <ros2_control name="NexusSystem" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+    </hardware>
+    <joint name="base_shoulder_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+    <joint name="shoulder_upperarm_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+    <joint name="revolute_3">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+    <joint name="forearm_wrist">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+    <joint name="wrist_tool">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+  </ros2_control>
+</robot>

@@ -1,0 +1,8 @@
+# state: short machine-readable status, e.g. "picktool_searching"
+# detail: free-form JSON string for anything the screen needs (x/y, tool
+# name, error text, etc.) — kept as a string so this service doesn't need
+# to change every time the frontend wants a new field.
+string state
+string detail
+---
+bool success

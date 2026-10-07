@@ -1,0 +1,12 @@
+# Generic "do this kind of move" request for anything beyond MoveTo's
+# simple named-config case. Kept generic (JSON params) rather than one
+# strongly-typed service per motion type, because there's no real
+# kinematics yet — motion_node currently just logs and mocks a delay
+# regardless of path_type, so a rigid typed interface would overstate
+# how much real behavior exists behind it. Tighten this once a real
+# arm/URDF exists and each path_type has actual distinct motion logic.
+string path_type      # "draw_line" | "draw_arc" | "mark" | "place" | "arrange"
+string params_json    # e.g. {"from":[10,20],"to":[90,20]} or {"center":[50,50],"radius":20,"angle":90}
+---
+bool success
+string message

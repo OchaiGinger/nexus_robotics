@@ -1,0 +1,14 @@
+# radius accepted for grid/overlay purposes (drawing the correct-size
+# arc on the screenshot) but per your description the physical motion
+# only rotates joint 4 by `angle` — radius does not currently drive any
+# separate motor axis. See motion_node's draw_arc handling.
+float32 center_x_mm
+float32 center_y_mm
+float32 radius_mm
+float32 angle_deg
+string direction   # "cw" | "ccw"
+---
+bool success
+string message
+---
+string current_step

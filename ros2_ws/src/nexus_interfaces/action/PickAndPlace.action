@@ -1,0 +1,10 @@
+string target_object
+float32 place_from_x_mm
+float32 place_from_y_mm
+float32 place_to_x_mm
+float32 place_to_y_mm
+---
+bool success
+string message
+---
+string current_step

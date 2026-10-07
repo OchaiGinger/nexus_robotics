@@ -1,0 +1,10 @@
+# Looks for an A4/A3-shaped rectangle in the current cam2 frame.
+# Does NOT wait internally — if not found/matched, found=false and the
+# CALLER loops (this is normal operation, not an error to retry-on-
+# failure; see grid_node's own internal wait loop for the live view too).
+string paper_size   # "A4" or "A3"
+---
+bool found
+float32[] corner_x   # 4 corners, in raw camera pixel space, if found
+float32[] corner_y
+float32 aspect_ratio_error   # |detected_ratio - expected_ratio|, for logging/debugging

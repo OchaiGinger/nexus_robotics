@@ -1,0 +1,14 @@
+# orientation left blank/"" to let draw_line_node compute it from
+# from/to itself (per your "follows mark for 1/5, finds vertical or
+# horizontal from the points" description) — pass it explicitly only if
+# you want to force diagonal/ray-style behavior later.
+string orientation
+float32 from_x_mm
+float32 from_y_mm
+float32 to_x_mm
+float32 to_y_mm
+---
+bool success
+string message
+---
+string current_step

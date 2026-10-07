@@ -1,0 +1,41 @@
+# Add this service to your existing docker-compose.yml, alongside
+# rosbridge / nexus_nodes / vision_node. It follows the same pattern as
+# vision_node (own container, depends_on rosbridge for the ROS graph)
+# but doesn't need vision_node's extra_hosts/host.docker.internal
+# mapping — the phone has its own LAN IP, reached directly through
+# Docker's default bridge networking, not through the Windows-host
+# loopback trick cam1 needed for its USB-passthrough workaround.
+#
+# 8091 is published so you can open the annotated feed from a normal
+# browser on your host machine at http://localhost:8091/.
+#
+# phone_stream_url has NO default baked in on purpose — the phone's IP
+# changes between sessions, so pass it at `docker compose run` time or
+# edit the command line below each session:
+#
+#   docker compose run --rm grid_node ros2 run nexus_bridge grid_node \
+#     --ros-args -p phone_stream_url:=http://192.168.1.23:8080/video
+
+  grid_node:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - rosbridge
+    ports:
+      - "8091:8091"
+    command: >
+      ros2 run nexus_bridge grid_node --ros-args
+      -p phone_stream_url:=http://REPLACE_WITH_PHONE_IP:8080/video
+      -p paper_size:=A4
+
+# --------------------------------------------------------------------
+# ALSO: change your existing nexus_nodes service's command from
+#     command: ros2 run nexus_bridge dispatch_node
+# to
+#     command: ros2 launch nexus_bridge bringup.launch.py
+# so all five core nodes (tool_state, screen_state, motion, pick_tool,
+# dispatch) start together in that one container. See
+# nexus_bridge/launch/bringup.launch.py.
+# --------------------------------------------------------------------
+
